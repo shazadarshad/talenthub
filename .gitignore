@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+
+# Environment variables (never commit real secrets)
+.env
+
+# Database
+*.db
+instance/
+
+# Uploaded CVs (keep the folder, ignore the files)
+uploads/*
+!uploads/.gitkeep
+
+# Migrations metadata is kept, but not needed to ignore anything special here
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/

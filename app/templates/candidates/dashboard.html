@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard - TalentHub{% endblock %}
+
+{% block content %}
+  {% if not profile %}
+    <div class="empty">
+      <svg class="icon empty-icon"><use href="#i-user"></use></svg>
+      <p>You haven't created your profile yet. Employers can't find you until you do!</p>
+      <a href="{{ url_for('candidates.new_profile') }}" class="btn btn-primary">
+        <svg class="icon"><use href="#i-plus"></use></svg> Create My Profile
+      </a>
+    </div>
+  {% else %}
+    <div class="dash-header">
+      <div>
+        <h1>Welcome back, {{ profile.full_name }}</h1>
+        <p class="role">{{ profile.role_wanted }}</p>
+      </div>
+      <div class="dash-actions">
+        <a href="{{ url_for('candidates.edit_profile') }}" class="btn btn-outline">Edit Profile</a>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <svg class="icon stat-icon"><use href="#i-eye"></use></svg>
+        <div>
+          <p class="stat-num">{{ view_count }}</p>
+          <p class="stat-label">Profile views</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <svg class="icon stat-icon"><use href="#i-bookmark"></use></svg>
+        <div>
+          <p class="stat-num">{{ shortlist_count }}</p>
+          <p class="stat-label">Times shortlisted</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="profile-section">
+      <h3>Your Skills</h3>
+      <div class="skills">
+        {% for skill in profile.skill_list() %}
+          <span class="skill-tag">{{ skill }}</span>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <h3>Your Cover Letter</h3>
+      <p class="cover-letter">{{ profile.cover_letter }}</p>
+    </section>
+
+    {% if profile.cv_filename %}
+      <a href="{{ url_for('employer.download_cv', profile_id=profile.id) }}" class="btn btn-ghost">
+        <svg class="icon"><use href="#i-download"></use></svg> Download My CV
+      </a>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('candidates.delete_profile') }}"
+          onsubmit="return confirm('This will permanently remove your profile. Continue?');"
+          class="delete-form" style="margin-top: 24px;">
+      <button type="submit" class="btn btn-danger">
+        <svg class="icon"><use href="#i-trash"></use></svg> Delete My Profile
+      </button>
+    </form>
+  {% endif %}
+{% endblock %}

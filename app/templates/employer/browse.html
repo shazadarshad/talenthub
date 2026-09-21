@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Browse Talent - TalentHub{% endblock %}
+
+{% block content %}
+  <section class="hero hero-compact">
+    <h1>Find the right <span class="grad">talent</span> for your team</h1>
+    <p>Filter by skill, role, location, and experience level.</p>
+  </section>
+
+  <form class="filter-bar" method="get" action="{{ url_for('employer.browse') }}">
+    <div class="filter-field">
+      <svg class="icon"><use href="#i-search"></use></svg>
+      <input type="text" name="skill" placeholder="Skill (e.g. Python)" value="{{ filters.skill }}" />
+    </div>
+    <div class="filter-field">
+      <svg class="icon"><use href="#i-briefcase"></use></svg>
+      <input type="text" name="role" placeholder="Role (e.g. Developer)" value="{{ filters.role }}" />
+    </div>
+    <div class="filter-field">
+      <svg class="icon"><use href="#i-pin"></use></svg>
+      <input type="text" name="location" placeholder="Location" value="{{ filters.location }}" />
+    </div>
+    <div class="filter-field">
+      <select name="experience">
+        <option value="">Any experience</option>
+        {% for level in experience_levels %}
+          <option value="{{ level }}" {% if filters.experience == level %}selected{% endif %}>{{ level }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('employer.browse') }}" class="btn btn-ghost">Reset</a>
+  </form>
+
+  <p class="results-count">{{ pagination.total }} candidate{{ '' if pagination.total == 1 else 's' }} found</p>
+
+  {% if candidates %}
+    <div class="candidate-grid">
+      {% for c in candidates %}
+        <article class="candidate-card">
+          <div class="candidate-head">
+            <div class="avatar">{{ c.full_name[:1] | upper }}</div>
+            <div>
+              <h2><a href="{{ url_for('employer.candidate_detail', profile_id=c.id) }}">{{ c.full_name }}</a></h2>
+              <p class="role">{{ c.role_wanted }}</p>
+            </div>
+            <span class="badge badge-{{ c.experience_level | lower }}">{{ c.experience_level }}</span>
+          </div>
+
+          <p class="meta">
+            <svg class="icon"><use href="#i-pin"></use></svg> {{ c.location }}
+          </p>
+
+          <div class="skills">
+            {% for skill in c.skill_list()[:4] %}
+              <span class="skill-tag">{{ skill }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="candidate-actions">
+            <a href="{{ url_for('employer.candidate_detail', profile_id=c.id) }}" class="btn btn-outline btn-sm">View Profile</a>
+            {% if c.id in shortlisted_ids %}
+              <form method="post" action="{{ url_for('employer.unshortlist', profile_id=c.id) }}" class="delete-form">
+                <button type="submit" class="btn btn-ghost btn-sm">
+                  <svg class="icon"><use href="#i-bookmark"></use></svg> Shortlisted
+                </button>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('employer.shortlist', profile_id=c.id) }}" class="delete-form">
+                <button type="submit" class="btn btn-ghost btn-sm">
+                  <svg class="icon"><use href="#i-bookmark"></use></svg> Shortlist
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    {% if pagination.pages > 1 %}
+      <nav class="pagination">
+        {% set args = filters.copy() %}
+        {% if pagination.has_prev %}
+          {% set _ = args.update({'page': pagination.prev_num}) %}
+          <a href="{{ url_for('employer.browse', **args) }}" class="btn btn-outline btn-sm">&larr; Prev</a>
+        {% endif %}
+
+        <span class="pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+
+        {% if pagination.has_next %}
+          {% set _ = args.update({'page': pagination.next_num}) %}
+          <a href="{{ url_for('employer.browse', **args) }}" class="btn btn-outline btn-sm">Next &rarr;</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="empty">
+      <svg class="icon empty-icon"><use href="#i-user"></use></svg>
+      <p>No candidates match your filters.</p>
+      <a href="{{ url_for('employer.browse') }}" class="btn btn-outline btn-sm">Clear filters</a>
+    </div>
+  {% endif %}
+{% endblock %}

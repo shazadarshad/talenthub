@@ -1,0 +1,68 @@
+"""
+Small helper functions shared across the app:
+- role_required: a decorator that locks a route to one account type
+- is_valid_pdf: checks the file is *actually* a PDF, not just named .pdf
+- save_uploaded_cv: safely saves an uploaded CV with a unique filename
+"""
+import os
+import uuid
+from functools import wraps
+
+from flask import abort, current_app
+from flask_login import current_user
+from werkzeug.utils import secure_filename
+
+PDF_MAGIC_BYTES = b"%PDF"
+
+
+def role_required(role):
+    """Only let users with the given role (e.g. 'candidate' or 'employer') in.
+    Anyone else gets a 403 Forbidden - this stops candidates from reaching
+    employer-only pages and vice versa.
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped(*args, **kwargs):
+            if not current_user.is_authenticated:
+                abort(401)
+            if current_user.role != role:
+                abort(403)
+            return view_func(*args, **kwargs)
+        return wrapped
+    return decorator
+
+
+def is_valid_pdf(file_storage):
+    """Check the file's actual content starts with the PDF magic bytes.
+    A file can be renamed to "resume.pdf" without being a real PDF, so we
+    peek at the first few bytes instead of trusting the file extension.
+    """
+    if file_storage is None or not file_storage.filename:
+        return False
+
+    file_storage.stream.seek(0)
+    header = file_storage.stream.read(4)
+    file_storage.stream.seek(0)  # reset so it can still be saved afterwards
+    return header == PDF_MAGIC_BYTES
+
+
+def save_uploaded_cv(file_storage):
+    """Save an uploaded CV to the uploads folder with a unique, safe filename.
+    Returns the filename that was stored on disk.
+    """
+    safe_name = secure_filename(file_storage.filename)
+    stored_name = f"{uuid.uuid4().hex}_{safe_name}"
+
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_folder, exist_ok=True)
+    file_storage.save(os.path.join(upload_folder, stored_name))
+    return stored_name
+
+
+def delete_cv_file(filename):
+    """Remove a stored CV file from disk, if it exists."""
+    if not filename:
+        return
+    path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+    if os.path.exists(path):
+        os.remove(path)

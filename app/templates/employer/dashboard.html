@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}My Shortlist - TalentHub{% endblock %}
+
+{% block content %}
+  <div class="dash-header">
+    <div>
+      <h1>Your Shortlist</h1>
+      <p class="role">Candidates you've saved for later.</p>
+    </div>
+    <a href="{{ url_for('employer.browse') }}" class="btn btn-outline">
+      <svg class="icon"><use href="#i-search"></use></svg> Browse More Talent
+    </a>
+  </div>
+
+  {% if candidates %}
+    <div class="candidate-grid">
+      {% for c in candidates %}
+        <article class="candidate-card">
+          <div class="candidate-head">
+            <div class="avatar">{{ c.full_name[:1] | upper }}</div>
+            <div>
+              <h2><a href="{{ url_for('employer.candidate_detail', profile_id=c.id) }}">{{ c.full_name }}</a></h2>
+              <p class="role">{{ c.role_wanted }}</p>
+            </div>
+            <span class="badge badge-{{ c.experience_level | lower }}">{{ c.experience_level }}</span>
+          </div>
+
+          <p class="meta">
+            <svg class="icon"><use href="#i-pin"></use></svg> {{ c.location }}
+          </p>
+
+          <div class="skills">
+            {% for skill in c.skill_list()[:4] %}
+              <span class="skill-tag">{{ skill }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="candidate-actions">
+            <a href="{{ url_for('employer.candidate_detail', profile_id=c.id) }}" class="btn btn-outline btn-sm">View Profile</a>
+            <form method="post" action="{{ url_for('employer.unshortlist', profile_id=c.id) }}" class="delete-form">
+              <button type="submit" class="btn btn-ghost btn-sm">
+                <svg class="icon"><use href="#i-trash"></use></svg> Remove
+              </button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <svg class="icon empty-icon"><use href="#i-bookmark"></use></svg>
+      <p>You haven't shortlisted anyone yet.</p>
+      <a href="{{ url_for('employer.browse') }}" class="btn btn-outline btn-sm">Browse Talent</a>
+    </div>
+  {% endif %}
+{% endblock %}

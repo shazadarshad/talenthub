@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ candidate.full_name }} - TalentHub{% endblock %}
+
+{% block content %}
+  <a href="{{ url_for('employer.browse') }}" class="back-link">
+    <svg class="icon"><use href="#i-arrow-left"></use></svg> Back to all candidates
+  </a>
+
+  <article class="profile">
+    <header class="profile-header">
+      <div class="avatar avatar-lg">{{ candidate.full_name[:1] | upper }}</div>
+      <div class="profile-headtext">
+        <h1>{{ candidate.full_name }}</h1>
+        <p class="role">{{ candidate.role_wanted }}</p>
+        <div class="profile-meta">
+          <span><svg class="icon"><use href="#i-pin"></use></svg> {{ candidate.location }}</span>
+          <span><svg class="icon"><use href="#i-star"></use></svg> {{ candidate.experience_level }}</span>
+          <span><svg class="icon"><use href="#i-mail"></use></svg> <a href="mailto:{{ candidate.contact_email }}">{{ candidate.contact_email }}</a></span>
+        </div>
+      </div>
+    </header>
+
+    <section class="profile-section">
+      <h3>Skills</h3>
+      <div class="skills">
+        {% for skill in candidate.skill_list() %}
+          <span class="skill-tag">{{ skill }}</span>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <h3>Cover Letter</h3>
+      <p class="cover-letter">{{ candidate.cover_letter }}</p>
+    </section>
+
+    <div class="profile-actions">
+      {% if candidate.cv_filename %}
+        <a href="{{ url_for('employer.download_cv', profile_id=candidate.id) }}" class="btn btn-primary">
+          <svg class="icon"><use href="#i-download"></use></svg> Download CV
+        </a>
+      {% endif %}
+      <a href="mailto:{{ candidate.contact_email }}" class="btn btn-outline">
+        <svg class="icon"><use href="#i-mail"></use></svg> Contact
+      </a>
+      {% if is_shortlisted %}
+        <form method="post" action="{{ url_for('employer.unshortlist', profile_id=candidate.id) }}" class="delete-form">
+          <button type="submit" class="btn btn-ghost">
+            <svg class="icon"><use href="#i-bookmark"></use></svg> Remove from Shortlist
+          </button>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('employer.shortlist', profile_id=candidate.id) }}" class="delete-form">
+          <button type="submit" class="btn btn-ghost">
+            <svg class="icon"><use href="#i-bookmark"></use></svg> Add to Shortlist
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    <p class="posted">Submitted on {{ candidate.submitted_on.strftime("%d %b %Y") }}</p>
+  </article>
+{% endblock %}

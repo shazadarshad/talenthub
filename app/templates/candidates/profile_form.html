@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit Profile" if not is_new else "Create Your Profile" }} - TalentHub{% endblock %}
+
+{% block content %}
+  <div class="form-wrapper">
+    <div class="form-head">
+      <h1>{{ "Edit Your Profile" if not is_new else "Create Your Profile" }}</h1>
+      <p>Fill in your details so employers can discover you.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="form-grid">
+        <div class="field">
+          {{ form.full_name.label }}
+          {{ form.full_name(placeholder="e.g. Shazad Arshad") }}
+          {% for error in form.full_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="field">
+          {{ form.role_wanted.label }}
+          {{ form.role_wanted(placeholder="e.g. Frontend Developer") }}
+          {% for error in form.role_wanted.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="field">
+          {{ form.location.label }}
+          {{ form.location(placeholder="e.g. Colombo or Remote") }}
+          {% for error in form.location.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="field">
+          {{ form.experience_level.label }}
+          {{ form.experience_level() }}
+        </div>
+        <div class="field">
+          {{ form.contact_email.label }}
+          {{ form.contact_email(placeholder="you@example.com") }}
+          {% for error in form.contact_email.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="field">
+          {{ form.skills.label }}
+          {{ form.skills(placeholder="e.g. Python, Flask, SQL, Git") }}
+          {% for error in form.skills.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="field">
+        {{ form.cover_letter.label }}
+        {{ form.cover_letter(rows=6, placeholder="Tell employers a little about yourself...") }}
+        {% for error in form.cover_letter.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="field">
+        <label for="cv">
+          CV (PDF{% if not is_new %}, leave blank to keep your current one{% endif %})
+        </label>
+        <label class="file-drop" for="cv">
+          <svg class="icon file-drop-icon"><use href="#i-file"></use></svg>
+          <span id="fileLabel">
+            {% if profile and profile.cv_filename %}A CV is already on file - click to replace it{% else %}Click to choose your PDF file{% endif %}
+          </span>
+        </label>
+        {{ form.cv(class="file-input", id="cv", accept="application/pdf") }}
+        {% for error in form.cv.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-primary") }}
+        <a href="{{ url_for('candidates.dashboard') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("cv");
+    const fileLabel = document.getElementById("fileLabel");
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length) fileLabel.textContent = fileInput.files[0].name;
+    });
+  </script>
+{% endblock %}
