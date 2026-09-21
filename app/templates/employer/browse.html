@@ -4,35 +4,58 @@
 {% block content %}
   <section class="hero hero-compact">
     <h1>Find the right <span class="grad">talent</span> for your team</h1>
-    <p>Filter by skill, role, location, and experience level.</p>
+    <p>Filter by skill, role, location, and experience level - or describe what you need and let AI find the closest matches.</p>
   </section>
 
-  <form class="filter-bar" method="get" action="{{ url_for('employer.browse') }}">
-    <div class="filter-field">
-      <svg class="icon"><use href="#i-search"></use></svg>
-      <input type="text" name="skill" placeholder="Skill (e.g. Python)" value="{{ filters.skill }}" />
+  <!-- AI smart search -->
+  <form class="smart-search-bar" method="get" action="{{ url_for('employer.browse') }}">
+    <div class="filter-field smart-search-field">
+      <svg class="icon"><use href="#i-sparkle"></use></svg>
+      <input type="text" name="smart" placeholder="Describe who you're looking for, e.g. &quot;junior Python developer with database experience&quot;" value="{{ filters.smart }}" />
     </div>
-    <div class="filter-field">
-      <svg class="icon"><use href="#i-briefcase"></use></svg>
-      <input type="text" name="role" placeholder="Role (e.g. Developer)" value="{{ filters.role }}" />
-    </div>
-    <div class="filter-field">
-      <svg class="icon"><use href="#i-pin"></use></svg>
-      <input type="text" name="location" placeholder="Location" value="{{ filters.location }}" />
-    </div>
-    <div class="filter-field">
-      <select name="experience">
-        <option value="">Any experience</option>
-        {% for level in experience_levels %}
-          <option value="{{ level }}" {% if filters.experience == level %}selected{% endif %}>{{ level }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <button type="submit" class="btn btn-primary">Filter</button>
-    <a href="{{ url_for('employer.browse') }}" class="btn btn-ghost">Reset</a>
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#i-sparkle"></use></svg> AI Search
+    </button>
+    {% if smart_search_active %}
+      <a href="{{ url_for('employer.browse') }}" class="btn btn-ghost">Clear</a>
+    {% endif %}
   </form>
 
-  <p class="results-count">{{ pagination.total }} candidate{{ '' if pagination.total == 1 else 's' }} found</p>
+  {% if not smart_search_active %}
+    <form class="filter-bar" method="get" action="{{ url_for('employer.browse') }}">
+      <div class="filter-field">
+        <svg class="icon"><use href="#i-search"></use></svg>
+        <input type="text" name="skill" placeholder="Skill (e.g. Python)" value="{{ filters.skill }}" />
+      </div>
+      <div class="filter-field">
+        <svg class="icon"><use href="#i-briefcase"></use></svg>
+        <input type="text" name="role" placeholder="Role (e.g. Developer)" value="{{ filters.role }}" />
+      </div>
+      <div class="filter-field">
+        <svg class="icon"><use href="#i-pin"></use></svg>
+        <input type="text" name="location" placeholder="Location" value="{{ filters.location }}" />
+      </div>
+      <div class="filter-field">
+        <select name="experience">
+          <option value="">Any experience</option>
+          {% for level in experience_levels %}
+            <option value="{{ level }}" {% if filters.experience == level %}selected{% endif %}>{{ level }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-outline">Filter</button>
+      <a href="{{ url_for('employer.browse') }}" class="btn btn-ghost">Reset</a>
+    </form>
+  {% endif %}
+
+  {% if smart_search_active %}
+    <p class="results-count">
+      <svg class="icon"><use href="#i-sparkle"></use></svg>
+      AI-ranked results for "{{ filters.smart }}" &middot; {{ candidates|length }} candidate{{ '' if candidates|length == 1 else 's' }}
+    </p>
+  {% else %}
+    <p class="results-count">{{ pagination.total }} candidate{{ '' if pagination.total == 1 else 's' }} found</p>
+  {% endif %}
 
   {% if candidates %}
     <div class="candidate-grid">
@@ -46,6 +69,12 @@
             </div>
             <span class="badge badge-{{ c.experience_level | lower }}">{{ c.experience_level }}</span>
           </div>
+
+          {% if smart_search_active and ai_reasons.get(c.id) %}
+            <p class="ai-match-reason">
+              <svg class="icon"><use href="#i-sparkle"></use></svg> {{ ai_reasons.get(c.id) }}
+            </p>
+          {% endif %}
 
           <p class="meta">
             <svg class="icon"><use href="#i-pin"></use></svg> {{ c.location }}
@@ -79,7 +108,7 @@
       {% endfor %}
     </div>
 
-    {% if pagination.pages > 1 %}
+    {% if pagination and pagination.pages > 1 %}
       <nav class="pagination">
         {% set args = filters.copy() %}
         {% if pagination.has_prev %}
@@ -98,8 +127,8 @@
   {% else %}
     <div class="empty">
       <svg class="icon empty-icon"><use href="#i-user"></use></svg>
-      <p>No candidates match your filters.</p>
-      <a href="{{ url_for('employer.browse') }}" class="btn btn-outline btn-sm">Clear filters</a>
+      <p>No candidates match your search.</p>
+      <a href="{{ url_for('employer.browse') }}" class="btn btn-outline btn-sm">Clear search</a>
     </div>
   {% endif %}
 {% endblock %}

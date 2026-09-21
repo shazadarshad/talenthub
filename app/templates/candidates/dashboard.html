@@ -38,6 +38,20 @@
       </div>
     </div>
 
+    {% if profile.ai_summary %}
+      <section class="profile-section ai-section">
+        <h3>
+          <svg class="icon"><use href="#i-sparkle"></use></svg>
+          What Employers See (AI Summary)
+          <span class="ai-badge">AI-generated from your CV</span>
+        </h3>
+        <p class="ai-summary-text">{{ profile.ai_summary }}</p>
+        <p class="ai-disclaimer">
+          This is generated automatically from your CV when you upload it. Re-upload your CV anytime to refresh it.
+        </p>
+      </section>
+    {% endif %}
+
     <section class="profile-section">
       <h3>Your Skills</h3>
       <div class="skills">

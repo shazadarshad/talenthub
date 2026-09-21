@@ -11,6 +11,12 @@ from app.extensions import db
 from app.models import CandidateProfile, Shortlist, ProfileView
 from app.forms import EXPERIENCE_LEVELS
 from app.utils import role_required
+from app.ai import rank_candidates
+
+# Smart search only makes sense on a reasonably small pool of candidates -
+# it sends their profiles to the AI in one request, so we cap how many
+# get considered to keep it fast and affordable.
+SMART_SEARCH_MAX_CANDIDATES = 40
 
 
 @employer_bp.route("/browse")
@@ -21,7 +27,40 @@ def browse():
     role_wanted = request.args.get("role", "").strip()
     location = request.args.get("location", "").strip()
     experience = request.args.get("experience", "").strip()
+    smart_query = request.args.get("smart", "").strip()
     page = request.args.get("page", 1, type=int)
+
+    filters = {
+        "skill": skill, "role": role_wanted,
+        "location": location, "experience": experience, "smart": smart_query,
+    }
+    shortlisted_ids = {
+        s.candidate_profile_id
+        for s in Shortlist.query.filter_by(employer_id=current_user.id).all()
+    }
+
+    # Smart search: rank a pool of candidates against a plain-English
+    # requirement using AI, instead of exact-match SQL filters.
+    if smart_query:
+        pool = (
+            CandidateProfile.query.order_by(CandidateProfile.submitted_on.desc())
+            .limit(SMART_SEARCH_MAX_CANDIDATES)
+            .all()
+        )
+        ranked = rank_candidates(smart_query, pool)
+        candidates = [c for c, _reason in ranked]
+        reasons = {c.id: reason for c, reason in ranked if reason}
+
+        return render_template(
+            "employer/browse.html",
+            pagination=None,
+            candidates=candidates,
+            filters=filters,
+            experience_levels=EXPERIENCE_LEVELS,
+            shortlisted_ids=shortlisted_ids,
+            ai_reasons=reasons,
+            smart_search_active=True,
+        )
 
     query = CandidateProfile.query
 
@@ -39,16 +78,6 @@ def browse():
     per_page = current_app.config["CANDIDATES_PER_PAGE"]
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Which of these candidates has the current employer already shortlisted?
-    shortlisted_ids = {
-        s.candidate_profile_id
-        for s in Shortlist.query.filter_by(employer_id=current_user.id).all()
-    }
-
-    filters = {
-        "skill": skill, "role": role_wanted,
-        "location": location, "experience": experience,
-    }
     return render_template(
         "employer/browse.html",
         pagination=pagination,

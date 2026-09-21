@@ -66,6 +66,14 @@ class CandidateProfile(db.Model):
     cv_filename = db.Column(db.String(255), nullable=True)
     submitted_on = db.Column(db.DateTime, default=utcnow)
 
+    # AI-generated fields, produced once from the uploaded CV's text.
+    # These are supplementary - the app works fine if they're empty
+    # (e.g. AI is not configured, or the CV couldn't be read).
+    ai_summary = db.Column(db.Text, nullable=True)
+    ai_skills = db.Column(db.String(500), nullable=True)  # comma separated, AI-extracted
+    ai_experience_years = db.Column(db.Integer, nullable=True)
+    ai_generated_at = db.Column(db.DateTime, nullable=True)
+
     shortlisted_by = db.relationship(
         "Shortlist", backref="candidate_profile", cascade="all, delete-orphan"
     )
@@ -76,6 +84,12 @@ class CandidateProfile(db.Model):
     def skill_list(self):
         """Split the comma-separated skills string into a clean list."""
         return [s.strip() for s in self.skills.split(",") if s.strip()]
+
+    def ai_skill_list(self):
+        """Split the AI-extracted skills string into a clean list."""
+        if not self.ai_skills:
+            return []
+        return [s.strip() for s in self.ai_skills.split(",") if s.strip()]
 
     def __repr__(self):
         return f"<CandidateProfile {self.full_name}>"

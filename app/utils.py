@@ -66,3 +66,30 @@ def delete_cv_file(filename):
     path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
     if os.path.exists(path):
         os.remove(path)
+
+
+def extract_pdf_text(filename, max_chars=12000):
+    """Read the text content out of a stored CV PDF.
+
+    Returns an empty string if the file is missing or can't be read (e.g. a
+    scanned image PDF with no real text layer) - callers should treat that
+    as "no text available" rather than an error.
+    """
+    if not filename:
+        return ""
+
+    path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+    if not os.path.exists(path):
+        return ""
+
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(path)
+        pages_text = [page.extract_text() or "" for page in reader.pages]
+        text = "\n".join(pages_text).strip()
+        return text[:max_chars]
+    except Exception:
+        # A corrupted or unusual PDF shouldn't crash the app - just treat
+        # it as if there was no readable text.
+        return ""

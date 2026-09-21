@@ -31,6 +31,11 @@ class Config:
     # Rate limiting storage (in-memory is fine for a small app / one instance)
     RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
 
+    # AI features (CV summarization + smart search). If this is not set,
+    # AI features are simply skipped - the app still works without them.
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

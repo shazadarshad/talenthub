@@ -3,10 +3,12 @@
 
 {% block content %}
   <section class="hero">
+    <span class="eyebrow">Now in early access</span>
     <h1>The <span class="grad">reverse job board</span></h1>
     <p>
       Candidates submit their profile once. Employers browse, filter, and
-      reach out. No more sending your CV into a void.
+      reach out. No more sending your CV into a void, and no more sifting
+      through hundreds of unqualified applications.
     </p>
     <div class="hero-actions">
       <a href="{{ url_for('auth.signup') }}?role=candidate" class="btn btn-primary">
@@ -18,21 +20,84 @@
     </div>
   </section>
 
-  <section class="how-it-works">
-    <div class="how-card">
-      <svg class="icon how-icon"><use href="#i-file"></use></svg>
-      <h3>1. Submit your profile</h3>
-      <p>Candidates add their skills, experience, a cover letter, and a CV — once.</p>
+  <!-- Trust / stats bar -->
+  <section class="stats-bar">
+    <div class="stats-bar-item">
+      <p class="stats-bar-num">100%</p>
+      <p class="stats-bar-label">Free to use</p>
     </div>
-    <div class="how-card">
-      <svg class="icon how-icon"><use href="#i-search"></use></svg>
-      <h3>2. Employers search</h3>
-      <p>Employers filter by skill, role, location, and experience level to find a match.</p>
+    <div class="stats-bar-item">
+      <p class="stats-bar-num">No middlemen</p>
+      <p class="stats-bar-label">Direct contact, always</p>
     </div>
-    <div class="how-card">
-      <svg class="icon how-icon"><use href="#i-bookmark"></use></svg>
-      <h3>3. Shortlist & connect</h3>
-      <p>Employers shortlist promising candidates and reach out directly.</p>
+    <div class="stats-bar-item">
+      <p class="stats-bar-num">One profile</p>
+      <p class="stats-bar-label">Built once, seen by many</p>
+    </div>
+    <div class="stats-bar-item">
+      <p class="stats-bar-num">4 filters</p>
+      <p class="stats-bar-label">Skill, role, location, level</p>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section-block">
+    <span class="eyebrow">How it works</span>
+    <h2 class="section-title">Three steps, no back-and-forth</h2>
+    <div class="how-it-works">
+      <div class="how-card">
+        <svg class="icon how-icon"><use href="#i-file"></use></svg>
+        <h3>1. Submit your profile</h3>
+        <p>Candidates add their skills, experience, a cover letter, and a CV — once. No repeated applications.</p>
+      </div>
+      <div class="how-card">
+        <svg class="icon how-icon"><use href="#i-search"></use></svg>
+        <h3>2. Employers search</h3>
+        <p>Employers filter by skill, role, location, and experience level to find a match in minutes, not weeks.</p>
+      </div>
+      <div class="how-card">
+        <svg class="icon how-icon"><use href="#i-bookmark"></use></svg>
+        <h3>3. Shortlist & connect</h3>
+        <p>Employers shortlist promising candidates and reach out directly by email - no inbox middleman.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dual audience -->
+  <section class="section-block">
+    <span class="eyebrow">Built for both sides</span>
+    <h2 class="section-title">Whichever side of the table you're on</h2>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <h3>For candidates</h3>
+        <ul class="check-list">
+          <li><svg class="icon"><use href="#i-check"></use></svg> One profile, always up to date</li>
+          <li><svg class="icon"><use href="#i-check"></use></svg> Upload your CV once, employers download it directly</li>
+          <li><svg class="icon"><use href="#i-check"></use></svg> Track how many employers viewed and shortlisted you</li>
+          <li><svg class="icon"><use href="#i-check"></use></svg> No recruiter spam, no application black holes</li>
+        </ul>
+        <a href="{{ url_for('auth.signup') }}?role=candidate" class="btn btn-outline btn-sm">Create your profile</a>
+      </div>
+      <div class="audience-card">
+        <h3>For employers</h3>
+        <ul class="check-list">
+          <li><svg class="icon"><use href="#i-check"></use></svg> Filter by skill, role, location, and experience</li>
+          <li><svg class="icon"><use href="#i-check"></use></svg> Browse full profiles and cover letters before reaching out</li>
+          <li><svg class="icon"><use href="#i-check"></use></svg> Shortlist candidates and revisit them anytime</li>
+          <li><svg class="icon"><use href="#i-check"></use></svg> Download CVs directly - no email chains required</li>
+        </ul>
+        <a href="{{ url_for('auth.signup') }}?role=employer" class="btn btn-outline btn-sm">Start browsing talent</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <section class="cta-band">
+    <h2>Ready to get started?</h2>
+    <p>It takes less than two minutes to create an account.</p>
+    <div class="hero-actions" style="justify-content: center;">
+      <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">Create a free account</a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-outline">I already have one</a>
     </div>
   </section>
 {% endblock %}
