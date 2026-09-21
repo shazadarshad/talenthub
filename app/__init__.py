@@ -30,7 +30,11 @@ def create_app(config_name=None):
     login_manager.login_message = "Please log in to continue."
     login_manager.login_message_category = "error"
 
-    from app.models import User
+    # Import every model here (not just User) so SQLAlchemy's metadata
+    # knows about every table/column before create_all() runs below.
+    # Without this, tables for models that aren't imported yet (e.g. if
+    # blueprints hadn't been registered) could be missing from metadata.
+    from app.models import User, CandidateProfile, Shortlist, ProfileView  # noqa: F401
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -80,6 +84,17 @@ def create_app(config_name=None):
     with app.app_context():
         db.create_all()
         _sync_missing_columns(app)
+
+        # One-time seed hook: only runs if SEED_CANDIDATES_ON_STARTUP=true
+        # is set. This is how demo candidates get loaded into production
+        # without needing a direct database connection or SSH access -
+        # the app seeds itself once, then the env var gets removed.
+        if os.environ.get("SEED_CANDIDATES_ON_STARTUP") == "true":
+            try:
+                from seed_candidates import seed
+                seed(app=app)
+            except Exception:
+                app.logger.exception("Candidate seeding failed")
 
     return app
 
