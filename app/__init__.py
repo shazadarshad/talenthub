@@ -96,6 +96,16 @@ def create_app(config_name=None):
             except Exception:
                 app.logger.exception("Candidate seeding failed")
 
+        # One-time AI backfill hook: only runs if BACKFILL_AI_ON_STARTUP=true
+        # is set. Generates AI summaries for any candidate that has a CV
+        # but no summary yet (e.g. seeded demo profiles).
+        if os.environ.get("BACKFILL_AI_ON_STARTUP") == "true":
+            try:
+                from backfill_ai_summaries import backfill
+                backfill(app=app)
+            except Exception:
+                app.logger.exception("AI summary backfill failed")
+
     return app
 
 
