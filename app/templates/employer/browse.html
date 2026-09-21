@@ -61,12 +61,14 @@
             <a href="{{ url_for('employer.candidate_detail', profile_id=c.id) }}" class="btn btn-outline btn-sm">View Profile</a>
             {% if c.id in shortlisted_ids %}
               <form method="post" action="{{ url_for('employer.unshortlist', profile_id=c.id) }}" class="delete-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn btn-ghost btn-sm">
                   <svg class="icon"><use href="#i-bookmark"></use></svg> Shortlisted
                 </button>
               </form>
             {% else %}
               <form method="post" action="{{ url_for('employer.shortlist', profile_id=c.id) }}" class="delete-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn btn-ghost btn-sm">
                   <svg class="icon"><use href="#i-bookmark"></use></svg> Shortlist
                 </button>

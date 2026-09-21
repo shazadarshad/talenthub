@@ -45,12 +45,14 @@
       </a>
       {% if is_shortlisted %}
         <form method="post" action="{{ url_for('employer.unshortlist', profile_id=candidate.id) }}" class="delete-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit" class="btn btn-ghost">
             <svg class="icon"><use href="#i-bookmark"></use></svg> Remove from Shortlist
           </button>
         </form>
       {% else %}
         <form method="post" action="{{ url_for('employer.shortlist', profile_id=candidate.id) }}" class="delete-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit" class="btn btn-ghost">
             <svg class="icon"><use href="#i-bookmark"></use></svg> Add to Shortlist
           </button>

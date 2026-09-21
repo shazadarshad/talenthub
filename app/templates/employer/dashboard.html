@@ -38,6 +38,7 @@
           <div class="candidate-actions">
             <a href="{{ url_for('employer.candidate_detail', profile_id=c.id) }}" class="btn btn-outline btn-sm">View Profile</a>
             <form method="post" action="{{ url_for('employer.unshortlist', profile_id=c.id) }}" class="delete-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               <button type="submit" class="btn btn-ghost btn-sm">
                 <svg class="icon"><use href="#i-trash"></use></svg> Remove
               </button>

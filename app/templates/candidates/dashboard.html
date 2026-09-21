@@ -61,6 +61,7 @@
     <form method="post" action="{{ url_for('candidates.delete_profile') }}"
           onsubmit="return confirm('This will permanently remove your profile. Continue?');"
           class="delete-form" style="margin-top: 24px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <button type="submit" class="btn btn-danger">
         <svg class="icon"><use href="#i-trash"></use></svg> Delete My Profile
       </button>
