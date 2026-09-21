@@ -79,5 +79,50 @@ def create_app(config_name=None):
     # that don't exist yet, it never touches or drops existing data.
     with app.app_context():
         db.create_all()
+        _sync_missing_columns(app)
 
     return app
+
+
+def _sync_missing_columns(app):
+    """Add any model columns that are missing from the live database.
+
+    db.create_all() only creates whole tables that don't exist yet - it
+    won't add a new column to a table that's already there. Since this
+    app doesn't run a full migration tool in production, this checks for
+    a few known columns that were added after the tables were first
+    created, and adds them if missing. Safe to run every startup: each
+    column is only added if it isn't already there.
+    """
+    from sqlalchemy import text, inspect
+
+    # This uses Postgres-specific information_schema queries, so skip it
+    # entirely on SQLite (local dev/tests) - create_all() there is enough
+    # since the whole file is usually fresh.
+    if "sqlite" in app.config["SQLALCHEMY_DATABASE_URI"]:
+        return
+
+    columns_to_ensure = {
+        "candidate_profiles": [
+            ("ai_summary", "TEXT"),
+            ("ai_skills", "VARCHAR(500)"),
+            ("ai_experience_years", "INTEGER"),
+            ("ai_generated_at", "TIMESTAMP"),
+        ],
+    }
+
+    inspector = inspect(db.engine)
+    with db.engine.connect() as conn:
+        for table_name, columns in columns_to_ensure.items():
+            if table_name not in inspector.get_table_names():
+                continue  # table doesn't exist yet, create_all() will handle it
+
+            existing_columns = {c["name"] for c in inspector.get_columns(table_name)}
+            for column_name, column_type in columns:
+                if column_name in existing_columns:
+                    continue
+                conn.execute(text(
+                    f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
+                ))
+                conn.commit()
+                app.logger.info(f"Added missing column {table_name}.{column_name}")
