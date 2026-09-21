@@ -257,10 +257,22 @@ a { text-decoration: none; color: inherit; }
   display: flex; gap: 10px; margin-bottom: 14px;
 }
 .smart-search-field {
-  flex: 1; background: var(--accent-soft); border-color: #c7d2fe;
+  flex: 1; background: var(--surface);
+  border: 1.5px solid #c7d2fe;
+  box-shadow: 0 1px 2px rgba(55, 48, 163, 0.06);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.smart-search-field:hover {
+  border-color: var(--accent);
+}
+.smart-search-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  background: var(--surface);
 }
 .smart-search-field .icon { color: var(--accent); }
-.smart-search-field input::placeholder { color: #8b93d6; }
+.smart-search-field input { color: var(--gray-900); font-weight: 500; }
+.smart-search-field input::placeholder { color: var(--gray-400); font-weight: 400; }
 .ai-match-reason {
   display: flex; align-items: flex-start; gap: 6px;
   background: var(--accent-soft); color: var(--accent-soft-text);
