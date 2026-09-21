@@ -74,4 +74,10 @@ def create_app(config_name=None):
     # Make sure the folder for CV uploads exists.
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
+    # Create any missing database tables automatically on startup.
+    # This is safe to run every time - create_all() only creates tables
+    # that don't exist yet, it never touches or drops existing data.
+    with app.app_context():
+        db.create_all()
+
     return app
