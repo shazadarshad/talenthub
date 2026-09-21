@@ -1,15 +1,16 @@
 """
-Authentication routes: signup, login, logout.
-Login and signup are rate-limited so someone can't hammer the login form
-trying to guess a password, or spam-create accounts.
+Authentication routes: signup, login, logout, and password reset.
+Login, signup, and forgot-password are rate-limited so someone can't
+hammer these forms trying to guess a password or spam requests.
 """
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 
 from app.auth import auth_bp
 from app.extensions import db, limiter
-from app.forms import SignupForm, LoginForm
+from app.forms import SignupForm, LoginForm, ForgotPasswordForm, ResetPasswordForm
 from app.models import User
+from app.utils import generate_reset_token, verify_reset_token, send_password_reset_email
 
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
@@ -73,3 +74,56 @@ def logout():
     logout_user()
     flash("You've been logged out.", "success")
     return redirect(url_for("main.landing"))
+
+
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.landing"))
+
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        email = form.email.data.lower().strip()
+        user = User.query.filter_by(email=email).first()
+
+        # Always show the same message whether or not the account exists -
+        # this avoids letting someone use this form to check which emails
+        # are registered on the site.
+        if user:
+            token = generate_reset_token(user.email)
+            reset_url = url_for("auth.reset_password", token=token, _external=True)
+            send_password_reset_email(user.email, reset_url)
+
+        flash(
+            "If an account with that email exists, we've sent a password reset link.",
+            "success",
+        )
+        return redirect(url_for("auth.login"))
+
+    return render_template("auth/forgot_password.html", form=form)
+
+
+@auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for("main.landing"))
+
+    email = verify_reset_token(token)
+    if email is None:
+        flash("That reset link is invalid or has expired. Please request a new one.", "error")
+        return redirect(url_for("auth.forgot_password"))
+
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        flash("That reset link is invalid or has expired. Please request a new one.", "error")
+        return redirect(url_for("auth.forgot_password"))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        db.session.commit()
+        flash("Your password has been reset. You can log in now.", "success")
+        return redirect(url_for("auth.login"))
+
+    return render_template("auth/reset_password.html", form=form)

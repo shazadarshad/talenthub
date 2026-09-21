@@ -36,6 +36,18 @@ class Config:
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
     OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
+    # Password reset emails (SMTP). If MAIL_USERNAME isn't set, email
+    # sending is skipped - the reset link is only logged to the console,
+    # so the rest of the app still works without a mail provider configured.
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+    # How long a password reset link stays valid, in seconds.
+    RESET_TOKEN_MAX_AGE = 60 * 60  # 1 hour
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

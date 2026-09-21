@@ -93,3 +93,67 @@ def extract_pdf_text(filename, max_chars=12000):
         # A corrupted or unusual PDF shouldn't crash the app - just treat
         # it as if there was no readable text.
         return ""
+
+
+def generate_reset_token(user_email):
+    """Create a signed, time-limited token for a password reset link.
+
+    Uses the app's SECRET_KEY to sign it, so it can't be forged, and it's
+    self-contained (no database table needed to track pending resets) -
+    verifying it later also checks that it hasn't expired.
+    """
+    from itsdangerous import URLSafeTimedSerializer
+
+    serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    return serializer.dumps(user_email, salt="password-reset")
+
+
+def verify_reset_token(token):
+    """Check a password reset token and return the email it was issued
+    for, or None if the token is invalid, tampered with, or expired.
+    """
+    from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+
+    serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    max_age = current_app.config.get("RESET_TOKEN_MAX_AGE", 3600)
+
+    try:
+        return serializer.loads(token, salt="password-reset", max_age=max_age)
+    except (BadSignature, SignatureExpired):
+        return None
+
+
+def send_password_reset_email(to_email, reset_url):
+    """Email a password reset link to the user.
+
+    If no mail server is configured (MAIL_USERNAME is blank), this just
+    logs the link instead of sending an email - handy for local dev, and
+    it means the app never breaks just because email isn't set up yet.
+    """
+    if not current_app.config.get("MAIL_USERNAME"):
+        current_app.logger.info(f"[No mail configured] Password reset link for {to_email}: {reset_url}")
+        return
+
+    from flask_mail import Message
+    from app.extensions import mail
+
+    message = Message(
+        subject="Reset your TalentHub password",
+        recipients=[to_email],
+        body=(
+            f"Hi,\n\n"
+            f"We received a request to reset your TalentHub password. "
+            f"Click the link below to choose a new one:\n\n"
+            f"{reset_url}\n\n"
+            f"This link expires in 1 hour. If you didn't request this, "
+            f"you can safely ignore this email.\n\n"
+            f"- TalentHub"
+        ),
+    )
+
+    try:
+        mail.send(message)
+    except Exception:
+        # Don't let an email provider outage break the reset flow for the
+        # user - log it so we can investigate, but still let them proceed.
+        current_app.logger.exception(f"Failed to send password reset email to {to_email}")

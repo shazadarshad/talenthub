@@ -10,7 +10,7 @@ import os
 from flask import Flask, render_template
 
 from config import config_by_name
-from app.extensions import db, migrate, login_manager, csrf, limiter
+from app.extensions import db, migrate, login_manager, csrf, limiter, mail
 
 
 def create_app(config_name=None):
@@ -25,6 +25,7 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
+    mail.init_app(app)
 
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Please log in to continue."
