@@ -8,6 +8,7 @@ Run locally:   python seed_candidates.py
 Run on Railway: railway run --service talenthub python seed_candidates.py
 """
 import io
+import os
 import sys
 
 from reportlab.lib.pagesizes import letter
@@ -535,6 +536,11 @@ def seed(app=None):
     """Create all seed candidates. If an app instance is passed in (e.g.
     when called from the app factory's startup hook), reuse it instead of
     creating a second one.
+
+    Also repairs any existing seeded profile whose CV file is missing on
+    disk (e.g. after a Railway redeploy wiped an unmounted filesystem,
+    before a persistent volume was attached) by regenerating and
+    re-saving that candidate's PDF from the same persona data.
     """
     owns_app = app is None
     if owns_app:
@@ -542,12 +548,30 @@ def seed(app=None):
 
     created = 0
     skipped = 0
+    repaired = 0
 
     with app.app_context():
+        upload_folder = app.config["UPLOAD_FOLDER"]
+        os.makedirs(upload_folder, exist_ok=True)
+
         for persona in CANDIDATES:
-            existing = User.query.filter_by(email=persona["email"]).first()
-            if existing:
-                print(f"SKIP  {persona['full_name']} - account already exists")
+            existing_user = User.query.filter_by(email=persona["email"]).first()
+
+            if existing_user:
+                profile = existing_user.candidate_profile
+                cv_missing = (
+                    profile
+                    and profile.cv_filename
+                    and not os.path.exists(os.path.join(upload_folder, profile.cv_filename))
+                )
+                if cv_missing:
+                    pdf_bytes = _make_cv_pdf(persona)
+                    with open(os.path.join(upload_folder, profile.cv_filename), "wb") as f:
+                        f.write(pdf_bytes)
+                    print(f"REPAIRED  {persona['full_name']} - CV file re-created on disk")
+                    repaired += 1
+                else:
+                    print(f"SKIP  {persona['full_name']} - account already exists")
                 skipped += 1
                 continue
 
@@ -559,9 +583,6 @@ def seed(app=None):
             pdf_bytes = _make_cv_pdf(persona)
             cv_filename = f"seed_{user.id}_{persona['full_name'].split()[0].lower()}_cv.pdf"
 
-            import os
-            upload_folder = app.config["UPLOAD_FOLDER"]
-            os.makedirs(upload_folder, exist_ok=True)
             with open(os.path.join(upload_folder, cv_filename), "wb") as f:
                 f.write(pdf_bytes)
 
@@ -582,7 +603,7 @@ def seed(app=None):
             print(f"CREATED  {persona['full_name']} ({persona['experience_level']}, {persona['role_wanted']})")
             created += 1
 
-    print(f"\nDone. Created {created}, skipped {skipped} (already existed).")
+    print(f"\nDone. Created {created}, repaired {repaired}, skipped {skipped - repaired} (already existed, CV intact).")
     print("All seeded accounts use the password: TalentHub2026!")
 
 
