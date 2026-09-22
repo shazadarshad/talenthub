@@ -8,7 +8,7 @@ from wtforms import (
     StringField, PasswordField, TextAreaField, SelectField, SubmitField,
 )
 from wtforms.validators import (
-    DataRequired, Email, EqualTo, Length, ValidationError,
+    DataRequired, Email, EqualTo, Length, ValidationError, Optional, URL,
 )
 
 EXPERIENCE_LEVELS = ["Entry", "Junior", "Mid", "Senior"]
@@ -53,6 +53,23 @@ class ResetPasswordForm(FlaskForm):
     submit = SubmitField("Reset Password")
 
 
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField("Current Password", validators=[DataRequired()])
+    new_password = PasswordField(
+        "New Password", validators=[DataRequired(), Length(min=8, message="Use at least 8 characters.")]
+    )
+    confirm_new_password = PasswordField(
+        "Confirm New Password",
+        validators=[DataRequired(), EqualTo("new_password", message="Passwords must match.")],
+    )
+    submit = SubmitField("Change Password")
+
+
+class DeleteAccountForm(FlaskForm):
+    password = PasswordField("Enter your password to confirm", validators=[DataRequired()])
+    submit = SubmitField("Delete My Account")
+
+
 class CandidateProfileForm(FlaskForm):
     full_name = StringField("Full Name", validators=[DataRequired(), Length(max=120)])
     role_wanted = StringField("Role You Want", validators=[DataRequired(), Length(max=120)])
@@ -66,6 +83,10 @@ class CandidateProfileForm(FlaskForm):
         validators=[DataRequired()],
     )
     contact_email = StringField("Contact Email", validators=[DataRequired(), Email()])
+    portfolio_url = StringField(
+        "Portfolio / LinkedIn URL (optional)",
+        validators=[Optional(), Length(max=300), URL(message="Enter a valid URL, e.g. https://...")],
+    )
     cover_letter = TextAreaField(
         "Cover Letter / About You", validators=[DataRequired(), Length(max=4000)]
     )

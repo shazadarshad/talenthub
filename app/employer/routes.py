@@ -3,9 +3,11 @@ Employer-only routes: browse and filter candidates, view a full profile
 (which logs a "profile view" so the candidate can see interest), shortlist
 candidates, and download CVs.
 """
-from flask import render_template, redirect, url_for, flash, request, abort, send_from_directory, current_app
+from flask import render_template, redirect, url_for, flash, request, abort, send_from_directory, current_app, Response
 from flask_login import login_required, current_user
 from sqlalchemy import func, case
+import csv
+import io
 
 from app.employer import employer_bp
 from app.extensions import db
@@ -185,6 +187,40 @@ def dashboard():
         .all()
     )
     return render_template("employer/dashboard.html", shortlist_entries=shortlist_entries)
+
+
+@employer_bp.route("/shortlist/export.csv")
+@login_required
+@role_required("employer")
+def export_shortlist_csv():
+    """Download the employer's shortlist as a CSV file - handy for
+    sharing with a hiring manager who doesn't have a TalentHub account.
+    """
+    entries = (
+        Shortlist.query.filter_by(employer_id=current_user.id)
+        .order_by(Shortlist.created_at.desc())
+        .all()
+    )
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "Name", "Role Wanted", "Location", "Experience Level",
+        "Skills", "Contact Email", "Portfolio/LinkedIn", "Shortlisted On", "Your Note",
+    ])
+    for entry in entries:
+        c = entry.candidate_profile
+        writer.writerow([
+            c.full_name, c.role_wanted, c.location, c.experience_level,
+            c.skills, c.contact_email, c.portfolio_url or "",
+            entry.created_at.strftime("%Y-%m-%d"), entry.note or "",
+        ])
+
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=talenthub_shortlist.csv"},
+    )
 
 
 @employer_bp.route("/shortlist/<int:profile_id>/note", methods=["POST"])

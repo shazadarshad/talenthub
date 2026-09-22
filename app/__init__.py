@@ -155,6 +155,7 @@ def _sync_missing_columns(app):
             ("ai_skills", "VARCHAR(500)"),
             ("ai_experience_years", "INTEGER"),
             ("ai_generated_at", "TIMESTAMP"),
+            ("portfolio_url", "VARCHAR(300)"),
         ],
         "shortlists": [
             ("note", "TEXT"),

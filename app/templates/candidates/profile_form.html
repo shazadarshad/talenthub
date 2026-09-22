@@ -41,6 +41,11 @@
           {{ form.skills(placeholder="e.g. Python, Flask, SQL, Git") }}
           {% for error in form.skills.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
         </div>
+        <div class="field">
+          {{ form.portfolio_url.label }}
+          {{ form.portfolio_url(placeholder="https://linkedin.com/in/you or your portfolio site") }}
+          {% for error in form.portfolio_url.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
       </div>
 
       <div class="field">

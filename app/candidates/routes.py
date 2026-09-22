@@ -68,6 +68,7 @@ def new_profile():
             location=form.location.data.strip(),
             experience_level=form.experience_level.data,
             contact_email=form.contact_email.data.strip(),
+            portfolio_url=form.portfolio_url.data.strip() if form.portfolio_url.data else None,
             cover_letter=form.cover_letter.data.strip(),
             cv_filename=cv_filename,
         )
@@ -112,6 +113,7 @@ def edit_profile():
         profile.location = form.location.data.strip()
         profile.experience_level = form.experience_level.data
         profile.contact_email = form.contact_email.data.strip()
+        profile.portfolio_url = form.portfolio_url.data.strip() if form.portfolio_url.data else None
         profile.cover_letter = form.cover_letter.data.strip()
 
         if new_cv_uploaded:
@@ -132,6 +134,7 @@ def edit_profile():
         form.location.data = profile.location
         form.experience_level.data = profile.experience_level
         form.contact_email.data = profile.contact_email
+        form.portfolio_url.data = profile.portfolio_url
         form.cover_letter.data = profile.cover_letter
 
     return render_template("candidates/profile_form.html", form=form, is_new=False, profile=profile)

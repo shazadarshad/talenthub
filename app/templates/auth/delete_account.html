@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Delete Account - TalentHub{% endblock %}
+
+{% block content %}
+  <div class="form-wrapper form-wrapper-sm">
+    <div class="form-head">
+      <h1>Delete Your Account</h1>
+      <p>This permanently deletes your account{{ ", profile, CV, and all messages" if current_user.is_candidate() else ", shortlist, and all messages" }}. This cannot be undone.</p>
+    </div>
+
+    <div class="flash flash-error" style="margin-bottom: 20px;">
+      <svg class="icon"><use href="#i-alert"></use></svg> This action is permanent and cannot be reversed.
+    </div>
+
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field">
+        {{ form.password.label }}
+        {{ form.password(placeholder="Your password") }}
+        {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-danger") }}
+        <a href="{{ url_for('candidates.dashboard') if current_user.is_candidate() else url_for('employer.dashboard') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

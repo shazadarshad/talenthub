@@ -16,6 +16,9 @@
           <span><svg class="icon"><use href="#i-pin"></use></svg> {{ candidate.location }}</span>
           <span><svg class="icon"><use href="#i-star"></use></svg> {{ candidate.experience_level }}</span>
           <span><svg class="icon"><use href="#i-mail"></use></svg> <a href="mailto:{{ candidate.contact_email }}">{{ candidate.contact_email }}</a></span>
+          {% if candidate.portfolio_url %}
+            <span><svg class="icon"><use href="#i-link"></use></svg> <a href="{{ candidate.portfolio_url }}" target="_blank" rel="noopener noreferrer">Portfolio / LinkedIn</a></span>
+          {% endif %}
         </div>
       </div>
     </header>

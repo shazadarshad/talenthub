@@ -10,6 +10,11 @@
     <a href="{{ url_for('employer.browse') }}" class="btn btn-outline">
       <svg class="icon"><use href="#i-search"></use></svg> Browse More Talent
     </a>
+    {% if shortlist_entries %}
+      <a href="{{ url_for('employer.export_shortlist_csv') }}" class="btn btn-ghost">
+        <svg class="icon"><use href="#i-download"></use></svg> Export CSV
+      </a>
+    {% endif %}
   </div>
 
   {% if shortlist_entries %}
@@ -86,4 +91,12 @@
       </a>
     </div>
   {% endif %}
+
+  <section class="account-settings">
+    <h3>Account Settings</h3>
+    <div class="account-settings-links">
+      <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline btn-sm">Change Password</a>
+      <a href="{{ url_for('auth.delete_account') }}" class="btn btn-ghost btn-sm">Delete Account</a>
+    </div>
+  </section>
 {% endblock %}

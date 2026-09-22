@@ -580,6 +580,16 @@ a { text-decoration: none; color: inherit; }
 .completeness-checklist li.done .icon { color: var(--success); }
 .completeness-hint { font-size: 0.8rem; color: var(--text-muted); }
 
+/* ===== Account settings ===== */
+.account-settings {
+  margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border);
+}
+.account-settings h3 {
+  font-size: 0.8125rem; margin-bottom: 14px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);
+}
+.account-settings-links { display: flex; gap: 10px; flex-wrap: wrap; }
+
 /* ===== Messaging ===== */
 .conversation-list {
   display: flex; flex-direction: column; gap: 1px;

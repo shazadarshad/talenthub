@@ -101,5 +101,13 @@
         <svg class="icon"><use href="#i-trash"></use></svg> Delete My Profile
       </button>
     </form>
+
+    <section class="account-settings">
+      <h3>Account Settings</h3>
+      <div class="account-settings-links">
+        <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline btn-sm">Change Password</a>
+        <a href="{{ url_for('auth.delete_account') }}" class="btn btn-ghost btn-sm">Delete Account</a>
+      </div>
+    </section>
   {% endif %}
 {% endblock %}

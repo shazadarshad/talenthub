@@ -62,6 +62,7 @@ class CandidateProfile(db.Model):
     location = db.Column(db.String(120), nullable=False)
     experience_level = db.Column(db.String(20), nullable=False)  # Entry/Junior/Mid/Senior
     contact_email = db.Column(db.String(255), nullable=False)
+    portfolio_url = db.Column(db.String(300), nullable=True)
     cover_letter = db.Column(db.Text, nullable=False)
     cv_filename = db.Column(db.String(255), nullable=True)
     submitted_on = db.Column(db.DateTime, default=utcnow)

@@ -8,7 +8,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from app.auth import auth_bp
 from app.extensions import db, limiter
-from app.forms import SignupForm, LoginForm, ForgotPasswordForm, ResetPasswordForm
+from app.forms import SignupForm, LoginForm, ForgotPasswordForm, ResetPasswordForm, ChangePasswordForm, DeleteAccountForm
 from app.models import User
 from app.utils import generate_reset_token, verify_reset_token, send_password_reset_email
 
@@ -127,3 +127,62 @@ def reset_password(token):
         return redirect(url_for("auth.login"))
 
     return render_template("auth/reset_password.html", form=form)
+
+
+@auth_bp.route("/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if not current_user.check_password(form.current_password.data):
+            flash("Your current password is incorrect.", "error")
+            return render_template("auth/change_password.html", form=form)
+
+        current_user.set_password(form.new_password.data)
+        db.session.commit()
+        flash("Your password has been changed.", "success")
+        if current_user.is_candidate():
+            return redirect(url_for("candidates.dashboard"))
+        return redirect(url_for("employer.dashboard"))
+
+    return render_template("auth/change_password.html", form=form)
+
+
+@auth_bp.route("/delete-account", methods=["GET", "POST"])
+@login_required
+def delete_account():
+    form = DeleteAccountForm()
+    if form.validate_on_submit():
+        if not current_user.check_password(form.password.data):
+            flash("Incorrect password.", "error")
+            return render_template("auth/delete_account.html", form=form)
+
+        user = db.session.get(User, current_user.id)
+        if user.is_candidate() and user.candidate_profile and user.candidate_profile.cv_filename:
+            from app.utils import delete_cv_file
+            delete_cv_file(user.candidate_profile.cv_filename)
+
+        from app.models import Shortlist, ProfileView, Conversation, Message
+
+        # Clean up everything that references this user, since there's no
+        # database-level cascade on these foreign keys - deleting the user
+        # directly would otherwise fail with a foreign key error.
+        if user.is_employer():
+            Shortlist.query.filter_by(employer_id=user.id).delete()
+            ProfileView.query.filter_by(employer_id=user.id).delete()
+        conversation_ids = [
+            c.id for c in Conversation.query.filter(
+                (Conversation.employer_id == user.id) | (Conversation.candidate_id == user.id)
+            ).all()
+        ]
+        if conversation_ids:
+            Message.query.filter(Message.conversation_id.in_(conversation_ids)).delete(synchronize_session=False)
+            Conversation.query.filter(Conversation.id.in_(conversation_ids)).delete(synchronize_session=False)
+
+        logout_user()
+        db.session.delete(user)
+        db.session.commit()
+        flash("Your account has been permanently deleted.", "success")
+        return redirect(url_for("main.landing"))
+
+    return render_template("auth/delete_account.html", form=form)
