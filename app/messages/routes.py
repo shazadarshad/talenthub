@@ -5,13 +5,24 @@ In-app messaging between employers and candidates.
 - Both sides can view their inbox and reply within a thread.
 - Each employer/candidate pair only ever has one conversation - replying
   just adds to the same thread instead of creating a new one.
+- The thread page polls /messages/thread/<id>/poll every few seconds so
+  new messages show up without either person needing to refresh.
 """
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 
 from app.messages import messages_bp
 from app.extensions import db
 from app.models import Conversation, Message, CandidateProfile
+
+
+def _serialize_message(message):
+    return {
+        "id": message.id,
+        "body": message.body,
+        "sent_at": message.sent_at.strftime("%d %b, %H:%M"),
+        "is_own": message.sender_id == current_user.id,
+    }
 
 
 @messages_bp.route("/inbox")
@@ -44,6 +55,7 @@ def thread(conversation_id):
 
     if request.method == "POST":
         body = request.form.get("body", "").strip()
+        message = None
         if body:
             message = Message(
                 conversation_id=conversation.id,
@@ -53,6 +65,15 @@ def thread(conversation_id):
             db.session.add(message)
             conversation.last_message_at = message.sent_at
             db.session.commit()
+
+        # If the request was made via fetch() (AJAX), return JSON instead
+        # of redirecting, so the page can append the new message instantly
+        # without a full reload.
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            if message is None:
+                return jsonify({"error": "Message body is required."}), 400
+            return jsonify({"message": _serialize_message(message)})
+
         return redirect(url_for("messages.thread", conversation_id=conversation.id))
 
     # Mark the other person's messages as read now that this user has
@@ -73,6 +94,44 @@ def thread(conversation_id):
         other_party=other_party,
         candidate_profile=conversation.candidate_profile,
     )
+
+
+@messages_bp.route("/thread/<int:conversation_id>/poll")
+@login_required
+def poll(conversation_id):
+    """Return any messages newer than the given message id, and mark them
+    as read if they were sent by the other person. The thread page calls
+    this every few seconds so new messages show up live.
+    """
+    conversation = Conversation.query.get_or_404(conversation_id)
+    if current_user.id not in (conversation.employer_id, conversation.candidate_id):
+        abort(403)
+
+    after_id = request.args.get("after", 0, type=int)
+    new_messages = [m for m in conversation.messages if m.id > after_id]
+
+    unread = [m for m in new_messages if m.sender_id != current_user.id and not m.read]
+    for m in unread:
+        m.read = True
+    if unread:
+        db.session.commit()
+
+    return jsonify({"messages": [_serialize_message(m) for m in new_messages]})
+
+
+@messages_bp.route("/unread-count")
+@login_required
+def unread_count():
+    """Total unread messages across every conversation for the current
+    user - polled by the nav bar so the badge updates live.
+    """
+    if current_user.is_employer():
+        conversations = Conversation.query.filter_by(employer_id=current_user.id).all()
+    else:
+        conversations = Conversation.query.filter_by(candidate_id=current_user.id).all()
+
+    count = sum(c.unread_count_for(current_user.id) for c in conversations)
+    return jsonify({"count": count})
 
 
 @messages_bp.route("/start/<int:profile_id>", methods=["GET", "POST"])

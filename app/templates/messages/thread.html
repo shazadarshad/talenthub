@@ -28,20 +28,112 @@
     </div>
   </div>
 
-  <div class="thread-messages">
+  <div class="thread-messages" id="threadMessages" data-conversation-id="{{ conversation.id }}">
     {% for message in conversation.messages %}
-      <div class="thread-bubble {{ 'own' if message.sender_id == current_user.id else '' }}">
+      <div class="thread-bubble {{ 'own' if message.sender_id == current_user.id else '' }}" data-message-id="{{ message.id }}">
         <p>{{ message.body }}</p>
         <span class="thread-timestamp">{{ message.sent_at.strftime("%d %b, %H:%M") }}</span>
       </div>
     {% endfor %}
   </div>
 
-  <form method="post" class="thread-reply-form">
+  <form method="post" class="thread-reply-form" id="replyForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-    <textarea name="body" rows="3" placeholder="Type your message..." required></textarea>
+    <textarea name="body" id="replyBody" rows="3" placeholder="Type your message..." required></textarea>
     <button type="submit" class="btn btn-primary">
       <svg class="icon"><use href="#i-send"></use></svg> Send
     </button>
   </form>
+
+  <script>
+    (function () {
+      const messagesEl = document.getElementById("threadMessages");
+      const conversationId = messagesEl.dataset.conversationId;
+      const form = document.getElementById("replyForm");
+      const textarea = document.getElementById("replyBody");
+      const csrfToken = form.querySelector('input[name="csrf_token"]').value;
+
+      let lastMessageId = 0;
+      messagesEl.querySelectorAll("[data-message-id]").forEach((el) => {
+        lastMessageId = Math.max(lastMessageId, parseInt(el.dataset.messageId, 10));
+      });
+
+      function scrollToBottom() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+      scrollToBottom();
+
+      function renderMessage(message) {
+        const bubble = document.createElement("div");
+        bubble.className = "thread-bubble" + (message.is_own ? " own" : "");
+        bubble.dataset.messageId = message.id;
+
+        const p = document.createElement("p");
+        p.textContent = message.body;
+        bubble.appendChild(p);
+
+        const time = document.createElement("span");
+        time.className = "thread-timestamp";
+        time.textContent = message.sent_at;
+        bubble.appendChild(time);
+
+        messagesEl.appendChild(bubble);
+        lastMessageId = Math.max(lastMessageId, message.id);
+      }
+
+      // Poll for new messages every 3 seconds - this is what makes
+      // messages show up on the other person's screen without them
+      // needing to refresh the page.
+      async function pollForNewMessages() {
+        try {
+          const resp = await fetch(`/messages/thread/${conversationId}/poll?after=${lastMessageId}`);
+          if (!resp.ok) return;
+          const data = await resp.json();
+          if (data.messages && data.messages.length) {
+            data.messages.forEach(renderMessage);
+            scrollToBottom();
+          }
+        } catch (err) {
+          // A single failed poll isn't worth bothering the user about -
+          // it'll just try again on the next interval.
+        }
+      }
+      const pollInterval = setInterval(pollForNewMessages, 3000);
+
+      // Stop polling if the tab isn't visible, to avoid pointless requests.
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) pollForNewMessages();
+      });
+
+      // Send the reply via fetch so it appears instantly for the sender
+      // too, without a full page reload.
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const body = textarea.value.trim();
+        if (!body) return;
+
+        const formData = new FormData();
+        formData.append("csrf_token", csrfToken);
+        formData.append("body", body);
+
+        try {
+          const resp = await fetch(form.action || window.location.pathname, {
+            method: "POST",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            body: formData,
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            renderMessage(data.message);
+            scrollToBottom();
+            textarea.value = "";
+          }
+        } catch (err) {
+          // If sending fails, fall back to a normal form submit so the
+          // message still goes through.
+          form.submit();
+        }
+      });
+    })();
+  </script>
 {% endblock %}

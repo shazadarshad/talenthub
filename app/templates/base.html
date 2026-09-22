@@ -58,9 +58,7 @@
           {% endif %}
           <a href="{{ url_for('messages.inbox') }}" class="nav-inbox-link">
             <svg class="icon"><use href="#i-message"></use></svg> Messages
-            {% if unread_message_count > 0 %}
-              <span class="nav-badge">{{ unread_message_count }}</span>
-            {% endif %}
+            <span id="navUnreadBadge" class="nav-badge" style="{{ '' if unread_message_count > 0 else 'display:none;' }}">{{ unread_message_count }}</span>
           </a>
           <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm">
             <svg class="icon"><use href="#i-log-out"></use></svg> Logout
@@ -104,5 +102,33 @@
     </div>
     <p class="footer-credit">Built by Shazad Arshad &middot; with AI-assisted coding</p>
   </footer>
+
+  {% if current_user.is_authenticated %}
+    <script>
+      // Keep the Messages nav badge up to date without needing a page
+      // refresh, so new messages are noticeable while browsing anywhere.
+      (function () {
+        const badge = document.getElementById("navUnreadBadge");
+        if (!badge) return;
+
+        async function refreshUnreadCount() {
+          try {
+            const resp = await fetch("/messages/unread-count");
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.count > 0) {
+              badge.textContent = data.count;
+              badge.style.display = "";
+            } else {
+              badge.style.display = "none";
+            }
+          } catch (err) {
+            // Skip silently - it'll try again on the next interval.
+          }
+        }
+        setInterval(refreshUnreadCount, 8000);
+      })();
+    </script>
+  {% endif %}
 </body>
 </html>
