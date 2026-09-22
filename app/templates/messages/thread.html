@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Conversation - TalentHub{% endblock %}
+
+{% block content %}
+  <a href="{{ url_for('messages.inbox') }}" class="back-link">
+    <svg class="icon"><use href="#i-arrow-left"></use></svg> Back to inbox
+  </a>
+
+  <div class="thread-header">
+    <div class="avatar">
+      {% if current_user.is_employer() %}
+        {{ candidate_profile.full_name[:1] | upper }}
+      {% else %}
+        {{ other_party.email[:1] | upper }}
+      {% endif %}
+    </div>
+    <div>
+      <h1>
+        {% if current_user.is_employer() %}
+          {{ candidate_profile.full_name }}
+        {% else %}
+          {{ other_party.email }}
+        {% endif %}
+      </h1>
+      {% if current_user.is_employer() %}
+        <a href="{{ url_for('employer.candidate_detail', profile_id=candidate_profile.id) }}" class="thread-view-profile">View profile &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="thread-messages">
+    {% for message in conversation.messages %}
+      <div class="thread-bubble {{ 'own' if message.sender_id == current_user.id else '' }}">
+        <p>{{ message.body }}</p>
+        <span class="thread-timestamp">{{ message.sent_at.strftime("%d %b, %H:%M") }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="thread-reply-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <textarea name="body" rows="3" placeholder="Type your message..." required></textarea>
+    <button type="submit" class="btn btn-primary">
+      <svg class="icon"><use href="#i-send"></use></svg> Send
+    </button>
+  </form>
+{% endblock %}

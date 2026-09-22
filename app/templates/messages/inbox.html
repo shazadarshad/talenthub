@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Messages - TalentHub{% endblock %}
+
+{% block content %}
+  <div class="dash-header">
+    <div>
+      <h1>Messages</h1>
+      <p class="role">Your conversations with {{ "candidates" if current_user.is_employer() else "employers" }}.</p>
+    </div>
+  </div>
+
+  {% if conversations %}
+    <div class="conversation-list">
+      {% for c in conversations %}
+        {% set other = c.other_party(current_user.id) %}
+        {% set unread = c.unread_count_for(current_user.id) %}
+        <a href="{{ url_for('messages.thread', conversation_id=c.id) }}" class="conversation-item {{ 'unread' if unread else '' }}">
+          <div class="avatar">
+            {% if current_user.is_employer() %}
+              {{ c.candidate_profile.full_name[:1] | upper }}
+            {% else %}
+              {{ other.email[:1] | upper }}
+            {% endif %}
+          </div>
+          <div class="conversation-info">
+            <h3>
+              {% if current_user.is_employer() %}
+                {{ c.candidate_profile.full_name }}
+              {% else %}
+                {{ other.email }}
+              {% endif %}
+            </h3>
+            {% if c.messages %}
+              <p class="conversation-preview">{{ c.messages[-1].body[:80] }}{% if c.messages[-1].body|length > 80 %}...{% endif %}</p>
+            {% endif %}
+          </div>
+          {% if unread %}
+            <span class="nav-badge">{{ unread }}</span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <svg class="icon empty-icon"><use href="#i-message"></use></svg>
+      <p>No messages yet.</p>
+      {% if current_user.is_employer() %}
+        <a href="{{ url_for('employer.browse') }}" class="btn btn-outline btn-sm">Browse Talent</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

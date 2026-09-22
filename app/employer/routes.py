@@ -5,6 +5,7 @@ candidates, and download CVs.
 """
 from flask import render_template, redirect, url_for, flash, request, abort, send_from_directory, current_app
 from flask_login import login_required, current_user
+from sqlalchemy import func, case
 
 from app.employer import employer_bp
 from app.extensions import db
@@ -18,6 +19,16 @@ from app.ai import rank_candidates
 # get considered to keep it fast and affordable.
 SMART_SEARCH_MAX_CANDIDATES = 40
 
+# Lets us sort by experience level even though it's stored as text -
+# higher number means more senior.
+EXPERIENCE_RANK = {"Entry": 1, "Junior": 2, "Mid": 3, "Senior": 4}
+
+SORT_OPTIONS = {
+    "recent": "Most Recent",
+    "experience": "Most Experienced",
+    "views": "Most Viewed",
+}
+
 
 @employer_bp.route("/browse")
 @login_required
@@ -28,11 +39,15 @@ def browse():
     location = request.args.get("location", "").strip()
     experience = request.args.get("experience", "").strip()
     smart_query = request.args.get("smart", "").strip()
+    sort_by = request.args.get("sort", "recent")
+    if sort_by not in SORT_OPTIONS:
+        sort_by = "recent"
     page = request.args.get("page", 1, type=int)
 
     filters = {
         "skill": skill, "role": role_wanted,
         "location": location, "experience": experience, "smart": smart_query,
+        "sort": sort_by,
     }
     shortlisted_ids = {
         s.candidate_profile_id
@@ -60,6 +75,7 @@ def browse():
             shortlisted_ids=shortlisted_ids,
             ai_reasons=reasons,
             smart_search_active=True,
+            sort_options=SORT_OPTIONS,
         )
 
     query = CandidateProfile.query
@@ -73,7 +89,21 @@ def browse():
     if experience:
         query = query.filter(CandidateProfile.experience_level == experience)
 
-    query = query.order_by(CandidateProfile.submitted_on.desc())
+    if sort_by == "experience":
+        # Experience level is stored as text (Entry/Junior/Mid/Senior), so
+        # map it to a number to sort it in the right order, not alphabetically.
+        experience_order = case(EXPERIENCE_RANK, value=CandidateProfile.experience_level, else_=0)
+        query = query.order_by(experience_order.desc(), CandidateProfile.submitted_on.desc())
+    elif sort_by == "views":
+        # Sort by how many times each profile has been viewed, most first.
+        # A left outer join + count so candidates with zero views still show up.
+        query = (
+            query.outerjoin(ProfileView, ProfileView.candidate_profile_id == CandidateProfile.id)
+            .group_by(CandidateProfile.id)
+            .order_by(func.count(ProfileView.id).desc(), CandidateProfile.submitted_on.desc())
+        )
+    else:
+        query = query.order_by(CandidateProfile.submitted_on.desc())
 
     per_page = current_app.config["CANDIDATES_PER_PAGE"]
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -85,6 +115,7 @@ def browse():
         filters=filters,
         experience_levels=EXPERIENCE_LEVELS,
         shortlisted_ids=shortlisted_ids,
+        sort_options=SORT_OPTIONS,
     )
 
 
@@ -148,13 +179,31 @@ def unshortlist(profile_id):
 @login_required
 @role_required("employer")
 def dashboard():
-    shortlisted = (
-        CandidateProfile.query.join(Shortlist)
-        .filter(Shortlist.employer_id == current_user.id)
+    shortlist_entries = (
+        Shortlist.query.filter_by(employer_id=current_user.id)
         .order_by(Shortlist.created_at.desc())
         .all()
     )
-    return render_template("employer/dashboard.html", candidates=shortlisted)
+    return render_template("employer/dashboard.html", shortlist_entries=shortlist_entries)
+
+
+@employer_bp.route("/shortlist/<int:profile_id>/note", methods=["POST"])
+@login_required
+@role_required("employer")
+def save_note(profile_id):
+    """Save a private note on a shortlisted candidate. Only the employer
+    who wrote it can ever see it - it's not shown to the candidate or
+    other employers.
+    """
+    entry = Shortlist.query.filter_by(
+        employer_id=current_user.id, candidate_profile_id=profile_id
+    ).first_or_404()
+
+    entry.note = request.form.get("note", "").strip()[:2000]
+    db.session.commit()
+    flash("Note saved.", "success")
+
+    return redirect(request.referrer or url_for("employer.dashboard"))
 
 
 @employer_bp.route("/cv/<int:profile_id>")

@@ -35,7 +35,7 @@ def create_app(config_name=None):
     # knows about every table/column before create_all() runs below.
     # Without this, tables for models that aren't imported yet (e.g. if
     # blueprints hadn't been registered) could be missing from metadata.
-    from app.models import User, CandidateProfile, Shortlist, ProfileView  # noqa: F401
+    from app.models import User, CandidateProfile, Shortlist, ProfileView, Conversation, Message  # noqa: F401
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -46,11 +46,32 @@ def create_app(config_name=None):
     from app.auth import auth_bp
     from app.candidates import candidates_bp
     from app.employer import employer_bp
+    from app.messages import messages_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(candidates_bp, url_prefix="/candidates")
     app.register_blueprint(employer_bp, url_prefix="/employer")
+    app.register_blueprint(messages_bp, url_prefix="/messages")
+
+    @app.context_processor
+    def inject_unread_message_count():
+        """Makes the inbox unread count available in every template
+        (e.g. for a badge in the nav bar), without every route needing
+        to compute and pass it manually.
+        """
+        from flask_login import current_user
+        if not current_user.is_authenticated:
+            return {"unread_message_count": 0}
+
+        from app.models import Conversation
+        if current_user.is_employer():
+            conversations = Conversation.query.filter_by(employer_id=current_user.id).all()
+        else:
+            conversations = Conversation.query.filter_by(candidate_id=current_user.id).all()
+
+        count = sum(c.unread_count_for(current_user.id) for c in conversations)
+        return {"unread_message_count": count}
 
     # --- Error handlers ---
     @app.errorhandler(404)
@@ -134,6 +155,9 @@ def _sync_missing_columns(app):
             ("ai_skills", "VARCHAR(500)"),
             ("ai_experience_years", "INTEGER"),
             ("ai_generated_at", "TIMESTAMP"),
+        ],
+        "shortlists": [
+            ("note", "TEXT"),
         ],
     }
 

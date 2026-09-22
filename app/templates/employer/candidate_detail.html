@@ -68,8 +68,11 @@
           <svg class="icon"><use href="#i-download"></use></svg> Download CV
         </a>
       {% endif %}
-      <a href="mailto:{{ candidate.contact_email }}" class="btn btn-outline">
-        <svg class="icon"><use href="#i-mail"></use></svg> Contact
+      <a href="{{ url_for('messages.start', profile_id=candidate.id) }}" class="btn btn-outline">
+        <svg class="icon"><use href="#i-message"></use></svg> Message
+      </a>
+      <a href="mailto:{{ candidate.contact_email }}" class="btn btn-ghost">
+        <svg class="icon"><use href="#i-mail"></use></svg> Email
       </a>
       {% if is_shortlisted %}
         <form method="post" action="{{ url_for('employer.unshortlist', profile_id=candidate.id) }}" class="delete-form">

@@ -5,16 +5,17 @@
   <div class="dash-header">
     <div>
       <h1>Your Shortlist</h1>
-      <p class="role">Candidates you've saved for later.</p>
+      <p class="role">Candidates you've saved for later, with your private notes.</p>
     </div>
     <a href="{{ url_for('employer.browse') }}" class="btn btn-outline">
       <svg class="icon"><use href="#i-search"></use></svg> Browse More Talent
     </a>
   </div>
 
-  {% if candidates %}
+  {% if shortlist_entries %}
     <div class="candidate-grid">
-      {% for c in candidates %}
+      {% for entry in shortlist_entries %}
+        {% set c = entry.candidate_profile %}
         <article class="candidate-card">
           <div class="candidate-head">
             <div class="avatar">{{ c.full_name[:1] | upper }}</div>
@@ -35,8 +36,20 @@
             {% endfor %}
           </div>
 
+          <form method="post" action="{{ url_for('employer.save_note', profile_id=c.id) }}" class="note-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <label class="note-label">
+              <svg class="icon"><use href="#i-note"></use></svg> Private note
+            </label>
+            <textarea name="note" rows="2" placeholder="e.g. Call Tuesday, good fit for senior role...">{{ entry.note or '' }}</textarea>
+            <button type="submit" class="btn btn-ghost btn-sm">Save Note</button>
+          </form>
+
           <div class="candidate-actions">
             <a href="{{ url_for('employer.candidate_detail', profile_id=c.id) }}" class="btn btn-outline btn-sm">View Profile</a>
+            <a href="{{ url_for('messages.start', profile_id=c.id) }}" class="btn btn-ghost btn-sm">
+              <svg class="icon"><use href="#i-message"></use></svg> Message
+            </a>
             <form method="post" action="{{ url_for('employer.unshortlist', profile_id=c.id) }}" class="delete-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               <button type="submit" class="btn btn-ghost btn-sm">

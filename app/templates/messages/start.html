@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Message {{ candidate.full_name }} - TalentHub{% endblock %}
+
+{% block content %}
+  <a href="{{ url_for('employer.candidate_detail', profile_id=candidate.id) }}" class="back-link">
+    <svg class="icon"><use href="#i-arrow-left"></use></svg> Back to profile
+  </a>
+
+  <div class="form-wrapper form-wrapper-sm">
+    <div class="form-head">
+      <h1>Message {{ candidate.full_name }}</h1>
+      <p>{{ candidate.role_wanted }} &middot; {{ candidate.location }}</p>
+    </div>
+
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="field">
+        <label for="body">Your Message</label>
+        <textarea id="body" name="body" rows="6" placeholder="Introduce yourself and the opportunity you have in mind..." required></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          <svg class="icon"><use href="#i-send"></use></svg> Send Message
+        </button>
+        <a href="{{ url_for('employer.candidate_detail', profile_id=candidate.id) }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

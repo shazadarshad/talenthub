@@ -104,6 +104,7 @@ class Shortlist(db.Model):
         db.Integer, db.ForeignKey("candidate_profiles.id"), nullable=False
     )
     created_at = db.Column(db.DateTime, default=utcnow)
+    note = db.Column(db.Text, nullable=True)  # private note, visible only to this employer
 
     employer = db.relationship("User", foreign_keys=[employer_id])
 
@@ -123,3 +124,53 @@ class ProfileView(db.Model):
     viewed_at = db.Column(db.DateTime, default=utcnow)
 
     employer = db.relationship("User", foreign_keys=[employer_id])
+
+
+class Conversation(db.Model):
+    """A single thread between one employer and one candidate.
+    Only one conversation ever exists per employer/candidate pair -
+    replies just add more messages to the same thread.
+    """
+    __tablename__ = "conversations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    employer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    candidate_profile_id = db.Column(
+        db.Integer, db.ForeignKey("candidate_profiles.id"), nullable=False
+    )
+    created_at = db.Column(db.DateTime, default=utcnow)
+    last_message_at = db.Column(db.DateTime, default=utcnow)
+
+    employer = db.relationship("User", foreign_keys=[employer_id])
+    candidate = db.relationship("User", foreign_keys=[candidate_id])
+    candidate_profile = db.relationship("CandidateProfile", foreign_keys=[candidate_profile_id])
+    messages = db.relationship(
+        "Message", backref="conversation", cascade="all, delete-orphan",
+        order_by="Message.sent_at",
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint("employer_id", "candidate_id", name="uq_employer_candidate_conversation"),
+    )
+
+    def other_party(self, current_user_id):
+        """Return the user on the other side of this conversation."""
+        return self.candidate if current_user_id == self.employer_id else self.employer
+
+    def unread_count_for(self, user_id):
+        """How many messages in this thread the given user hasn't read yet."""
+        return sum(1 for m in self.messages if m.sender_id != user_id and not m.read)
+
+
+class Message(db.Model):
+    __tablename__ = "messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey("conversations.id"), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    sent_at = db.Column(db.DateTime, default=utcnow)
+    read = db.Column(db.Boolean, default=False, nullable=False)
+
+    sender = db.relationship("User", foreign_keys=[sender_id])
