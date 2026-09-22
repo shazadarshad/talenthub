@@ -41,11 +41,36 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="empty">
-      <svg class="icon empty-icon"><use href="#i-message"></use></svg>
-      <p>No messages yet.</p>
+    <div class="empty-guide">
+      <div class="empty-guide-icon">
+        <svg class="icon"><use href="#i-message"></use></svg>
+      </div>
       {% if current_user.is_employer() %}
-        <a href="{{ url_for('employer.browse') }}" class="btn btn-outline btn-sm">Browse Talent</a>
+        <h2>No conversations yet</h2>
+        <p>Messaging lets you reach out to candidates directly inside TalentHub — no emailing into a void, and no back-and-forth over contact details.</p>
+        <div class="empty-guide-steps">
+          <div class="empty-guide-step">
+            <span class="empty-guide-num">1</span>
+            <p>Open a candidate's profile from Browse Talent or your Shortlist</p>
+          </div>
+          <div class="empty-guide-step">
+            <span class="empty-guide-num">2</span>
+            <p>Click <strong>"Message"</strong> and introduce yourself</p>
+          </div>
+          <div class="empty-guide-step">
+            <span class="empty-guide-num">3</span>
+            <p>Replies show up here instantly — no refreshing needed</p>
+          </div>
+        </div>
+        <a href="{{ url_for('employer.browse') }}" class="btn btn-primary">
+          <svg class="icon"><use href="#i-search"></use></svg> Browse Talent
+        </a>
+      {% else %}
+        <h2>No messages yet</h2>
+        <p>When an employer is interested in your profile, their message will show up here. Make sure your profile is complete so employers know what you're looking for.</p>
+        <a href="{{ url_for('candidates.dashboard') }}" class="btn btn-primary">
+          <svg class="icon"><use href="#i-layout"></use></svg> Go to My Dashboard
+        </a>
       {% endif %}
     </div>
   {% endif %}

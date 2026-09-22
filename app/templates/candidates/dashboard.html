@@ -38,6 +38,27 @@
       </div>
     </div>
 
+    {% if completeness_percent < 100 %}
+      <section class="completeness-card">
+        <div class="completeness-header">
+          <h3>Profile completeness</h3>
+          <span class="completeness-percent">{{ completeness_percent }}%</span>
+        </div>
+        <div class="completeness-bar">
+          <div class="completeness-fill" style="width: {{ completeness_percent }}%;"></div>
+        </div>
+        <ul class="completeness-checklist">
+          {% for done, label in completeness_tips %}
+            <li class="{{ 'done' if done else '' }}">
+              <svg class="icon"><use href="#i-check"></use></svg>
+              {{ label }}
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="completeness-hint">A complete profile is more likely to get noticed and shortlisted by employers.</p>
+      </section>
+    {% endif %}
+
     {% if profile.ai_summary %}
       <section class="profile-section ai-section">
         <h3>

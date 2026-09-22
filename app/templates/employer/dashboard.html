@@ -61,10 +61,29 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="empty">
-      <svg class="icon empty-icon"><use href="#i-bookmark"></use></svg>
-      <p>You haven't shortlisted anyone yet.</p>
-      <a href="{{ url_for('employer.browse') }}" class="btn btn-outline btn-sm">Browse Talent</a>
+    <div class="empty-guide">
+      <div class="empty-guide-icon">
+        <svg class="icon"><use href="#i-bookmark"></use></svg>
+      </div>
+      <h2>Your shortlist is empty</h2>
+      <p>Shortlisting saves candidates you're interested in, so you can revisit them, jot down private notes, and message them later — without losing track while you keep browsing.</p>
+      <div class="empty-guide-steps">
+        <div class="empty-guide-step">
+          <span class="empty-guide-num">1</span>
+          <p>Browse candidates and open a profile that looks promising</p>
+        </div>
+        <div class="empty-guide-step">
+          <span class="empty-guide-num">2</span>
+          <p>Click <strong>"Add to Shortlist"</strong> to save them here</p>
+        </div>
+        <div class="empty-guide-step">
+          <span class="empty-guide-num">3</span>
+          <p>Add a private note and message them when you're ready</p>
+        </div>
+      </div>
+      <a href="{{ url_for('employer.browse') }}" class="btn btn-primary">
+        <svg class="icon"><use href="#i-search"></use></svg> Browse Talent
+      </a>
     </div>
   {% endif %}
 {% endblock %}

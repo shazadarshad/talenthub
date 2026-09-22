@@ -186,6 +186,27 @@ a { text-decoration: none; color: inherit; }
 .section-block { margin-bottom: 64px; }
 .section-title { font-size: 1.5rem; margin: 8px 0 28px; max-width: 480px; }
 
+/* ===== Landing page candidate preview ===== */
+.preview-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.preview-card {
+  position: relative; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px; overflow: hidden;
+}
+.preview-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, var(--surface) 75%);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  gap: 6px; padding: 20px; text-align: center;
+}
+.preview-overlay .icon { width: 20px; height: 20px; color: var(--text-muted); }
+.preview-overlay span { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; max-width: 160px; }
+.preview-footnote {
+  text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;
+}
+.preview-footnote a { color: var(--accent); font-weight: 600; }
+
 /* ===== How it works (landing page) ===== */
 .how-it-works {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
@@ -349,6 +370,36 @@ a { text-decoration: none; color: inherit; }
 .empty-icon { width: 36px; height: 36px; color: var(--gray-300); margin-bottom: 14px; }
 .empty p { margin-bottom: 18px; font-size: 0.9375rem; }
 
+/* ===== Richer empty-state guide (shortlist, inbox, etc.) ===== */
+.empty-guide {
+  max-width: 560px; margin: 24px auto; text-align: center;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 48px 32px; background: var(--surface);
+}
+.empty-guide-icon {
+  width: 48px; height: 48px; margin: 0 auto 20px;
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.empty-guide-icon .icon { width: 22px; height: 22px; }
+.empty-guide h2 { font-size: 1.25rem; margin-bottom: 10px; }
+.empty-guide p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 28px; }
+.empty-guide-steps {
+  display: flex; flex-direction: column; gap: 16px; text-align: left;
+  margin-bottom: 28px;
+}
+.empty-guide-step {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px; background: var(--gray-50); border-radius: var(--radius-md);
+}
+.empty-guide-num {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--gray-900); color: #fff; font-size: 0.75rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.empty-guide-step p { margin: 0; font-size: 0.875rem; color: var(--gray-800); text-align: left; }
+
+
 /* ===== Forms ===== */
 .form-wrapper {
   max-width: 720px; margin: 0 auto;
@@ -500,6 +551,35 @@ a { text-decoration: none; color: inherit; }
   outline: none; border-color: var(--gray-900);
 }
 
+/* ===== Profile completeness widget ===== */
+.completeness-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 22px; margin-bottom: 28px;
+}
+.completeness-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+.completeness-header h3 { font-size: 0.9rem; font-weight: 600; }
+.completeness-percent { font-weight: 700; color: var(--accent); font-family: "Poppins", sans-serif; }
+.completeness-bar {
+  height: 6px; background: var(--gray-100); border-radius: 20px; overflow: hidden; margin-bottom: 18px;
+}
+.completeness-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), #6366f1);
+  border-radius: 20px; transition: width 0.4s ease;
+}
+.completeness-checklist { list-style: none; margin-bottom: 12px; }
+.completeness-checklist li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0; font-size: 0.85rem; color: var(--text-muted);
+}
+.completeness-checklist li .icon {
+  width: 16px; height: 16px; color: var(--gray-300); flex-shrink: 0;
+}
+.completeness-checklist li.done { color: var(--gray-900); }
+.completeness-checklist li.done .icon { color: var(--success); }
+.completeness-hint { font-size: 0.8rem; color: var(--text-muted); }
+
 /* ===== Messaging ===== */
 .conversation-list {
   display: flex; flex-direction: column; gap: 1px;
@@ -593,6 +673,7 @@ a { text-decoration: none; color: inherit; }
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   .how-it-works { grid-template-columns: 1fr; }
+  .preview-grid { grid-template-columns: 1fr; }
   .stats-bar { grid-template-columns: repeat(2, 1fr); }
   .audience-grid { grid-template-columns: 1fr; }
   .cta-band { padding: 40px 24px; }

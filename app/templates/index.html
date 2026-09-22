@@ -20,25 +20,60 @@
     </div>
   </section>
 
-  <!-- Trust / stats bar -->
+  <!-- Live platform stats -->
   <section class="stats-bar">
+    <div class="stats-bar-item">
+      <p class="stats-bar-num">{{ stats.candidate_count }}</p>
+      <p class="stats-bar-label">Candidate{{ '' if stats.candidate_count == 1 else 's' }} on the platform</p>
+    </div>
+    <div class="stats-bar-item">
+      <p class="stats-bar-num">{{ stats.employer_count }}</p>
+      <p class="stats-bar-label">Employer{{ '' if stats.employer_count == 1 else 's' }} hiring</p>
+    </div>
+    <div class="stats-bar-item">
+      <p class="stats-bar-num">{{ stats.role_count }}</p>
+      <p class="stats-bar-label">Different roles represented</p>
+    </div>
     <div class="stats-bar-item">
       <p class="stats-bar-num">100%</p>
       <p class="stats-bar-label">Free to use</p>
     </div>
-    <div class="stats-bar-item">
-      <p class="stats-bar-num">No middlemen</p>
-      <p class="stats-bar-label">Direct contact, always</p>
-    </div>
-    <div class="stats-bar-item">
-      <p class="stats-bar-num">One profile</p>
-      <p class="stats-bar-label">Built once, seen by many</p>
-    </div>
-    <div class="stats-bar-item">
-      <p class="stats-bar-num">4 filters</p>
-      <p class="stats-bar-label">Skill, role, location, level</p>
-    </div>
   </section>
+
+  <!-- Live preview of real candidates -->
+  {% if preview_candidates %}
+    <section class="section-block">
+      <span class="eyebrow">See for yourself</span>
+      <h2 class="section-title">Real people, ready to be found</h2>
+      <div class="preview-grid">
+        {% for c in preview_candidates %}
+          <div class="preview-card">
+            <div class="candidate-head">
+              <div class="avatar">{{ c.full_name[:1] | upper }}</div>
+              <div>
+                <h3>{{ c.full_name }}</h3>
+                <p class="role">{{ c.role_wanted }}</p>
+              </div>
+              <span class="badge badge-{{ c.experience_level | lower }}">{{ c.experience_level }}</span>
+            </div>
+            <p class="meta"><svg class="icon"><use href="#i-pin"></use></svg> {{ c.location }}</p>
+            <div class="skills">
+              {% for skill in c.skill_list()[:3] %}
+                <span class="skill-tag">{{ skill }}</span>
+              {% endfor %}
+            </div>
+            <div class="preview-overlay">
+              <svg class="icon"><use href="#i-user"></use></svg>
+              <span>Sign up as an employer to view full profile</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="preview-footnote">
+        <a href="{{ url_for('auth.signup') }}?role=employer">Create a free employer account</a> to browse every candidate, filter by skill, and reach out directly.
+      </p>
+    </section>
+  {% endif %}
 
   <!-- How it works -->
   <section class="section-block">

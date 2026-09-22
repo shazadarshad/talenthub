@@ -137,6 +137,19 @@ def edit_profile():
     return render_template("candidates/profile_form.html", form=form, is_new=False, profile=profile)
 
 
+def _profile_completeness_tips(profile):
+    """Return a list of (done, label) tuples for simple profile checks,
+    so candidates always have something actionable to see on their
+    dashboard, even before any employer activity happens.
+    """
+    return [
+        (bool(profile.cv_filename), "Upload your CV"),
+        (len(profile.skill_list()) >= 3, "List at least 3 skills"),
+        (len(profile.cover_letter) >= 100, "Write a cover letter (100+ characters)"),
+        (bool(profile.ai_summary), "AI summary generated from your CV"),
+    ]
+
+
 @candidates_bp.route("/dashboard")
 @login_required
 @role_required("candidate")
@@ -144,15 +157,23 @@ def dashboard():
     profile = current_user.candidate_profile
     view_count = 0
     shortlist_count = 0
+    completeness_tips = []
+    completeness_percent = 0
+
     if profile:
         view_count = ProfileView.query.filter_by(candidate_profile_id=profile.id).count()
         shortlist_count = Shortlist.query.filter_by(candidate_profile_id=profile.id).count()
+        completeness_tips = _profile_completeness_tips(profile)
+        done_count = sum(1 for done, _ in completeness_tips if done)
+        completeness_percent = round((done_count / len(completeness_tips)) * 100)
 
     return render_template(
         "candidates/dashboard.html",
         profile=profile,
         view_count=view_count,
         shortlist_count=shortlist_count,
+        completeness_tips=completeness_tips,
+        completeness_percent=completeness_percent,
     )
 
 
