@@ -17,6 +17,21 @@
     {% endif %}
   </div>
 
+  {% if total_count %}
+    <nav class="status-tabs" aria-label="Filter by status">
+      <a href="{{ url_for('employer.dashboard') }}"
+         class="status-tab {{ 'active' if not status_filter else '' }}">
+        All <span class="status-tab-count">{{ total_count }}</span>
+      </a>
+      {% for status in statuses %}
+        <a href="{{ url_for('employer.dashboard', status=status) }}"
+           class="status-tab status-tab-{{ status | lower }} {{ 'active' if status_filter == status else '' }}">
+          {{ status }} <span class="status-tab-count">{{ status_counts[status] }}</span>
+        </a>
+      {% endfor %}
+    </nav>
+  {% endif %}
+
   {% if shortlist_entries %}
     <div class="candidate-grid">
       {% for entry in shortlist_entries %}
@@ -30,6 +45,18 @@
             </div>
             <span class="badge badge-{{ c.experience_level | lower }}">{{ c.experience_level }}</span>
           </div>
+
+          <form method="post" action="{{ url_for('employer.update_status', profile_id=c.id) }}" class="status-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <span class="status-badge status-{{ entry.status | lower }}">{{ entry.status }}</span>
+            <label class="sr-only" for="status-{{ c.id }}">Update status</label>
+            <select id="status-{{ c.id }}" name="status" onchange="this.form.submit()">
+              {% for status in statuses %}
+                <option value="{{ status }}" {{ 'selected' if entry.status == status else '' }}>{{ status }}</option>
+              {% endfor %}
+            </select>
+            <noscript><button type="submit" class="btn btn-ghost btn-sm">Update</button></noscript>
+          </form>
 
           <p class="meta">
             <svg class="icon"><use href="#i-pin"></use></svg> {{ c.location }}

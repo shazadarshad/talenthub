@@ -181,12 +181,33 @@ def unshortlist(profile_id):
 @login_required
 @role_required("employer")
 def dashboard():
-    shortlist_entries = (
-        Shortlist.query.filter_by(employer_id=current_user.id)
-        .order_by(Shortlist.created_at.desc())
-        .all()
+    status_filter = request.args.get("status", "").strip()
+
+    base_query = Shortlist.query.filter_by(employer_id=current_user.id)
+
+    # Count how many candidates sit in each pipeline stage (for the tabs).
+    all_entries = base_query.all()
+    status_counts = {status: 0 for status in Shortlist.STATUSES}
+    for entry in all_entries:
+        if entry.status in status_counts:
+            status_counts[entry.status] += 1
+
+    query = base_query
+    if status_filter in Shortlist.STATUSES:
+        query = query.filter_by(status=status_filter)
+    else:
+        status_filter = ""  # normalise anything unrecognised to "all"
+
+    shortlist_entries = query.order_by(Shortlist.created_at.desc()).all()
+
+    return render_template(
+        "employer/dashboard.html",
+        shortlist_entries=shortlist_entries,
+        statuses=Shortlist.STATUSES,
+        status_counts=status_counts,
+        status_filter=status_filter,
+        total_count=len(all_entries),
     )
-    return render_template("employer/dashboard.html", shortlist_entries=shortlist_entries)
 
 
 @employer_bp.route("/shortlist/export.csv")
@@ -206,14 +227,14 @@ def export_shortlist_csv():
     writer = csv.writer(buffer)
     writer.writerow([
         "Name", "Role Wanted", "Location", "Experience Level",
-        "Skills", "Contact Email", "Portfolio/LinkedIn", "Shortlisted On", "Your Note",
+        "Skills", "Contact Email", "Portfolio/LinkedIn", "Status", "Shortlisted On", "Your Note",
     ])
     for entry in entries:
         c = entry.candidate_profile
         writer.writerow([
             c.full_name, c.role_wanted, c.location, c.experience_level,
             c.skills, c.contact_email, c.portfolio_url or "",
-            entry.created_at.strftime("%Y-%m-%d"), entry.note or "",
+            entry.status, entry.created_at.strftime("%Y-%m-%d"), entry.note or "",
         ])
 
     return Response(
@@ -238,6 +259,30 @@ def save_note(profile_id):
     entry.note = request.form.get("note", "").strip()[:2000]
     db.session.commit()
     flash("Note saved.", "success")
+
+    return redirect(request.referrer or url_for("employer.dashboard"))
+
+
+@employer_bp.route("/shortlist/<int:profile_id>/status", methods=["POST"])
+@login_required
+@role_required("employer")
+def update_status(profile_id):
+    """Update the hiring-pipeline status of a shortlisted candidate
+    (New / Contacted / Interviewing / Hired / Rejected). Only affects
+    this employer's own shortlist entry.
+    """
+    entry = Shortlist.query.filter_by(
+        employer_id=current_user.id, candidate_profile_id=profile_id
+    ).first_or_404()
+
+    new_status = request.form.get("status", "").strip()
+    if new_status not in Shortlist.STATUSES:
+        flash("Invalid status.", "error")
+        return redirect(request.referrer or url_for("employer.dashboard"))
+
+    entry.status = new_status
+    db.session.commit()
+    flash(f"Status updated to “{new_status}”.", "success")
 
     return redirect(request.referrer or url_for("employer.dashboard"))
 

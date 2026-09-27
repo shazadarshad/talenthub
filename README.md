@@ -21,6 +21,7 @@ production-grade full-stack development (with AI-assisted coding along the way).
 - Filter by skill, role, location, and experience level
 - View full profiles and download CVs
 - Shortlist candidates and manage them from a dedicated dashboard
+- Track each shortlisted candidate through a hiring pipeline (New → Contacted → Interviewing → Hired → Rejected), filter the dashboard by stage, and export it (including status) to CSV
 
 **Under the hood**
 - Password hashing (no plain-text passwords, ever)

@@ -159,6 +159,7 @@ def _sync_missing_columns(app):
         ],
         "shortlists": [
             ("note", "TEXT"),
+            ("status", "VARCHAR(20) DEFAULT 'New' NOT NULL"),
         ],
     }
 

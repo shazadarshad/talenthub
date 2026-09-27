@@ -99,6 +99,10 @@ class CandidateProfile(db.Model):
 class Shortlist(db.Model):
     __tablename__ = "shortlists"
 
+    # Pipeline statuses an employer can set on a shortlisted candidate.
+    # "New" is the default when a candidate is first shortlisted.
+    STATUSES = ["New", "Contacted", "Interviewing", "Hired", "Rejected"]
+
     id = db.Column(db.Integer, primary_key=True)
     employer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     candidate_profile_id = db.Column(
@@ -106,6 +110,7 @@ class Shortlist(db.Model):
     )
     created_at = db.Column(db.DateTime, default=utcnow)
     note = db.Column(db.Text, nullable=True)  # private note, visible only to this employer
+    status = db.Column(db.String(20), nullable=False, default="New")  # hiring pipeline stage
 
     employer = db.relationship("User", foreign_keys=[employer_id])
 
