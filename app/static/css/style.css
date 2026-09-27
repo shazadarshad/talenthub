@@ -636,6 +636,35 @@ a { text-decoration: none; color: inherit; }
 }
 .thread-bubble.own .thread-timestamp { color: var(--gray-400); text-align: right; }
 
+/* ===== Message send / receive animations ===== */
+/* Only bubbles added live (via JS) get the .new class, so messages that
+   are already on the page at load don't re-animate every time. */
+@keyframes bubble-in-right {
+  from { opacity: 0; transform: translateY(8px) translateX(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+}
+@keyframes bubble-in-left {
+  from { opacity: 0; transform: translateY(8px) translateX(-12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+}
+
+/* Received message (from the other person) slides in from the left. */
+.thread-bubble.new {
+  animation: bubble-in-left 0.28s ease-out both;
+}
+/* Your own sent message slides in from the right. */
+.thread-bubble.own.new {
+  animation: bubble-in-right 0.28s ease-out both;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .thread-bubble.new,
+  .thread-bubble.own.new {
+    animation: none;
+  }
+}
+
 .thread-reply-form {
   display: flex; gap: 10px; align-items: flex-end;
   border-top: 1px solid var(--border); padding-top: 20px;

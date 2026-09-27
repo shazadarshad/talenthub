@@ -65,7 +65,10 @@
 
       function renderMessage(message) {
         const bubble = document.createElement("div");
-        bubble.className = "thread-bubble" + (message.is_own ? " own" : "");
+        // The "new" class triggers the send/receive entrance animation.
+        // Only live-rendered messages get it, so existing ones don't
+        // re-animate on page load.
+        bubble.className = "thread-bubble new" + (message.is_own ? " own" : "");
         bubble.dataset.messageId = message.id;
 
         const p = document.createElement("p");
